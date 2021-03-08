@@ -1,8 +1,8 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
-use PHPMaker2021\perpus\{UserProfile, Language, AdvancedSecurity, Timer, HttpErrorHandler};
+use PHPMaker2021\perpusupdate\{UserProfile, Language, AdvancedSecurity, Timer, HttpErrorHandler};
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Container\ContainerInterface;
@@ -17,11 +17,11 @@ use Slim\Exception\HttpInternalServerErrorException;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
 
-// Auto load
-require_once "vendor/autoload.php";
+// Relative path
+$RELATIVE_PATH = "";
 
 // Require files
-$RELATIVE_PATH = "";
+require_once "vendor/autoload.php";
 require_once "src/constants.php";
 require_once "src/config.php";
 require_once "src/phpfn.php";
@@ -31,11 +31,28 @@ require_once "src/userfn.php";
 $isProduction = IsProduction();
 $isDebug = IsDebug();
 
+// Warnings and notices as errors
+if ($isDebug && Config("REPORT_ALL_ERRORS")) {
+    error_reporting(E_ALL);
+    set_error_handler(function ($severity, $message, $file, $line) {
+        if (error_reporting() & $severity) {
+            throw new \ErrorException($message, 0, $severity, $file, $line);
+        }
+    });
+}
+
 // Instantiate PHP-DI ContainerBuilder
 $containerBuilder = new ContainerBuilder();
 
+// Enable compilation
+if ($isProduction && Config("COMPILE_CONTAINER") && !IsRemote(Config("UPLOAD_DEST_PATH"))) {
+    $containerBuilder->enableCompilation(UploadPath(false) . "cache");
+}
+
 // Add definitions
 $containerBuilder->addDefinitions("src/definitions.php");
+
+// Call Container Build event
 if (function_exists(PROJECT_NAMESPACE . "Container_Build")) {
     Container_Build($containerBuilder);
 }
@@ -50,8 +67,9 @@ $callableResolver = $app->getCallableResolver();
 
 // Display error details
 $displayErrorDetails = $isDebug;
-$logErrors = $isDebug;
-$logErrorDetails = $isDebug;
+$logErrorToFile = Config("LOG_ERROR_TO_FILE");
+$logErrors = $logErrorToFile || $isDebug;
+$logErrorDetails = $logErrorToFile || $isDebug;
 
 // Create request object from globals
 $serverRequestCreator = ServerRequestCreatorFactory::create();
@@ -62,10 +80,10 @@ $ResponseFactory = $app->getResponseFactory();
 $errorHandler = new HttpErrorHandler($callableResolver, $ResponseFactory);
 
 // Create shutdown handler
-if (!$isDebug) {
-    $shutdownHandler = new ShutdownHandler($Request, $errorHandler, $displayErrorDetails);
-    register_shutdown_function($shutdownHandler);
-}
+// if (!$isDebug) {
+//     $shutdownHandler = new ShutdownHandler($Request, $errorHandler, $displayErrorDetails);
+//     register_shutdown_function($shutdownHandler);
+// }
 
 // Add body parsing middleware
 $app->addBodyParsingMiddleware();
@@ -82,13 +100,13 @@ $app->setBasePath(BasePath());
 // Register routes (Add permission middleware)
 (require_once "src/routes.php")($app);
 
-// Enable same site cookie
+// Add SameSite cookie/session middleware
 $cookieConfiguration = new SameSiteCookieConfiguration();
 $cookieConfiguration->sameSite = Config("COOKIE_SAMESITE");
 $cookieConfiguration->httpOnly = Config("COOKIE_HTTP_ONLY");
 $cookieConfiguration->secure = Config("COOKIE_SECURE");
 $app->add(new SameSiteCookieMiddleware($cookieConfiguration));
-$app->add(new SameSiteSessionMiddleware($cookieConfiguration));
+$app->add(new SameSiteSessionMiddleware());
 
 // Add error handling middleware
 $errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, $logErrors, $logErrorDetails);

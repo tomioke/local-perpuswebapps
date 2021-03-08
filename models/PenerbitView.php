@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -152,7 +152,6 @@ class PenerbitView extends Penerbit
 
         // Initialize
         $GLOBALS["Page"] = &$this;
-        $this->TokenTimeout = SessionTimeoutTime();
 
         // Language object
         $Language = Container("language");
@@ -216,6 +215,30 @@ class PenerbitView extends Penerbit
         return is_object($Response) ? $Response->getBody() : ob_get_clean();
     }
 
+    // Is lookup
+    public function isLookup()
+    {
+        return SameText(Route(0), Config("API_LOOKUP_ACTION"));
+    }
+
+    // Is AutoFill
+    public function isAutoFill()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autofill");
+    }
+
+    // Is AutoSuggest
+    public function isAutoSuggest()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autosuggest");
+    }
+
+    // Is modal lookup
+    public function isModalLookup()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "modal");
+    }
+
     // Is terminated
     public function isTerminated()
     {
@@ -233,7 +256,7 @@ class PenerbitView extends Penerbit
         if ($this->terminated) {
             return;
         }
-        global $ExportFileName, $TempImages, $DashboardReport;
+        global $ExportFileName, $TempImages, $DashboardReport, $Response;
 
         // Page is terminated
         $this->terminated = true;
@@ -279,6 +302,11 @@ class PenerbitView extends Penerbit
                 WriteJson(array_merge(["success" => false], $this->getMessages()));
             }
             return;
+        } else { // Check if response is JSON
+            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+                $this->clearMessages();
+                return;
+            }
         }
 
         // Go to URL if specified
@@ -476,7 +504,6 @@ class PenerbitView extends Penerbit
     public $RecordRange = 10;
     public $RecKey = [];
     public $IsModal = false;
-    public $buku_Count;
 
     /**
      * Page run
@@ -589,7 +616,7 @@ class PenerbitView extends Penerbit
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
             // Pass table and field properties to client side
-            $this->toClientVar(["tableCaption"], ["caption", "Required", "IsInvalid", "Raw"]);
+            $this->toClientVar(["tableCaption"], ["caption", "Visible", "Required", "IsInvalid", "Raw"]);
 
             // Setup login status
             SetupLoginStatus();
@@ -661,7 +688,7 @@ class PenerbitView extends Penerbit
         // "detail_buku"
         $item = &$option->add("detail_buku");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("buku", "TblCaption");
-        $body .= "&nbsp;" . str_replace("%c", $this->buku_Count, $Language->phrase("DetailCount"));
+        $body .= "&nbsp;" . str_replace("%c", Container("buku")->Count, $Language->phrase("DetailCount"));
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("BukuList?" . Config("TABLE_SHOW_MASTER") . "=penerbit&" . GetForeignKeyUrl("fk_id_penerbit", $this->id_penerbit->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("BukuGrid");
@@ -802,7 +829,7 @@ class PenerbitView extends Penerbit
         $detailFilter = str_replace("@penerbit@", AdjustSql($this->id_penerbit->DbValue, "DB"), $detailFilter);
         $detailTbl->setCurrentMasterTable("penerbit");
         $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
-        $this->buku_Count = $detailTbl->loadRecordCount($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
     }
 
     // Return a row with default values

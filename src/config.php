@@ -4,7 +4,7 @@
  * PHPMaker 2021 configuration file
  */
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Locale settings
@@ -69,6 +69,7 @@ $Language = null; // Language
 $Security = null; // Security
 $UserProfile = null; // User profile
 $CurrentForm = null; // Form
+$Session = null; // Session
 
 // Current language
 $CurrentLanguage = "";
@@ -146,7 +147,7 @@ $Error = null;
 $API_ACTIONS = [];
 
 // User level
-include_once $RELATIVE_PATH . "src/userlevelsettings.php";
+require_once __DIR__ . "/userlevelsettings.php";
 
 /**
  * Config
@@ -154,20 +155,25 @@ include_once $RELATIVE_PATH . "src/userlevelsettings.php";
 $CONFIG = [
 
     // Debug
-    "DEBUG" => false, // true to debug
+    "DEBUG" => true, // Enabled
+    "REPORT_ALL_ERRORS" => true, // Treat PHP warnings and notices as errors
+    "LOG_ERROR_TO_FILE" => true, // Log error to file
     "DEBUG_MESSAGE_TEMPLATE" => '<div class="card card-danger ew-debug"><div class="card-header">' .
         '<h3 class="card-title">%t</h3>' .
         '<div class="card-tools"><button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button></div>' .
-        '</div><div class="card-body">%s</div></div>',
+        '</div><div class="card-body">%s</div></div>', // Debug message template
 
     // Environment
     "ENVIRONMENT" => "development",
 
+    // Container
+    "COMPILE_CONTAINER" => false,
+
     // General
     "UNFORMAT_YEAR" => 50, // Unformat year
-    "RANDOM_KEY" => 'bjI70rHSYZns84wk', // Random key for encryption
+    "RANDOM_KEY" => 'o6JIbL7nojr2vNgJ', // Random key for encryption
     "ENCRYPTION_KEY" => '', // Encryption key for data protection
-    "PROJECT_STYLESHEET_FILENAME" => "css/perpus.css", // Project stylesheet file name
+    "PROJECT_STYLESHEET_FILENAME" => "css/perpusupdate.css", // Project stylesheet file name
     "PROJECT_CHARSET" => "utf-8", // Project charset
     "IS_UTF8" => true, // Project charset
     "EMAIL_CHARSET" => "utf-8", // Email charset
@@ -196,7 +202,7 @@ $CONFIG = [
     "CONTROLLER_PATH" => "controllers/", // With trailing delimiter
 
     // Font path
-    "FONT_PATH" => realpath($RELATIVE_PATH . "font"), // No trailing delimiter
+    "FONT_PATH" => __DIR__ . "/../font", // No trailing delimiter
 
     // External JavaScripts
     "JAVASCRIPT_FILES" => [],
@@ -270,9 +276,9 @@ $CONFIG = [
     "SESSION_TIMEOUT_COUNTDOWN" => 60, // Session timeout count down interval (seconds)
 
     // Language settings
-    "LANGUAGE_FOLDER" => $RELATIVE_PATH . "lang/",
+    "LANGUAGE_FOLDER" => __DIR__ . "/../lang/",
     "LANGUAGE_DEFAULT_ID" => "en",
-    "LOCALE_FOLDER" => $RELATIVE_PATH . "locale/",
+    "LOCALE_FOLDER" => __DIR__ . "/../locale/",
     "CUSTOM_TEMPLATE_DATATYPES" => [DATATYPE_NUMBER, DATATYPE_DATE, DATATYPE_STRING, DATATYPE_BOOLEAN, DATATYPE_TIME], // Data to be passed to Custom Template
     "DATA_STRING_MAX_LENGTH" => 512,
 
@@ -324,7 +330,8 @@ $CONFIG = [
     "ALLOW_LOGIN_BY_URL" => false, // Allow login by URL
     "ALLOW_LOGIN_BY_SESSION" => false, // Allow login by session variables
     "PHPASS_ITERATION_COUNT_LOG2" => [10, 8], // For PasswordHash
-    "PASSWORD_HASH" => false, // Use PHP 5.5+ password hashing functions
+    "PASSWORD_HASH" => false, // Use PHP password hashing functions
+    "USE_MODAL_LOGIN" => false, // Use modal login
 
     /**
      * Dynamic User Level settings
@@ -395,7 +402,7 @@ $CONFIG = [
     "EMAIL_TEMPLATE_PATH" => "html", // Template path
 
     // Remote file
-    "REMOTE_FILE_PATTERN" => '/^((https?\:)?|ftps?\:|s3:)\/\//i',
+    "REMOTE_FILE_PATTERN" => '/^((https?\:)?|s3:)\/\//i',
 
     // File upload
     "UPLOAD_TEMP_PATH" => "", // Upload temp path (absolute local physical path)
@@ -422,6 +429,9 @@ $CONFIG = [
     "MULTIPLE_UPLOAD_SEPARATOR" => ",", // Multiple upload separator
     "DELETE_UPLOADED_FILES" => true, // Delete uploaded file on deleting record
     "FILE_NOT_FOUND" => "/9j/4AAQSkZJRgABAQAAAQABAAD/7QAuUGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAABIcAigADEZpbGVOb3RGb3VuZAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wgARCAABAAEDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhADEAAAAD+f/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEBPwB//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAwEBPwB//9k=", // 1x1 jpeg with IPTC data "2#040"="FileNotFound"
+
+    // Save file options
+    "SAVE_FILE_OPTIONS" => LOCK_EX,
 
     // Table actions
     "LIST_ACTION" => "list", // Table list action
@@ -471,15 +481,15 @@ $CONFIG = [
     "API_EXPORT_CHART_ACTION" => "chart", // API export chart action
     "API_PERMISSIONS_ACTION" => "permissions", // API permissions action
 
-    // URL rewrite // PHP
-    "USE_URL_REWRITE" => true, // Always use URL rewrite
+    // Session-less API actions
+    "SESSIONLESS_API_ACTIONS" => ["file"],
 
     // Image resize
     "THUMBNAIL_CLASS" => "\PHPThumb\GD",
     "RESIZE_OPTIONS" => ["keepAspectRatio" => false, "resizeUp" => !true, "jpegQuality" => 100],
 
     // Audit trail
-    "AUDIT_TRAIL_PATH" => "", // Audit trail path (relative to app root)
+    "AUDIT_TRAIL_PATH" => "log/", // Audit trail path (relative to app root)
 
     // Import records
     "IMPORT_CSV_DELIMITER" => ",", // Import to CSV delimiter
@@ -1028,7 +1038,7 @@ $CONFIG = [
     "COOKIE_CONSENT_BUTTON_CLASS" => "btn btn-dark btn-sm", // CSS class name for cookie consent buttons
 
     // Cookies
-    "COOKIE_EXPIRY_TIME" => time() + 365 * 24 * 60 * 60, // Change cookie expiry time here
+    "COOKIE_EXPIRY_TIME" => time() + 365 * 24 * 60 * 60,
     "COOKIE_HTTP_ONLY" => true,
     "COOKIE_SECURE" => false,
     "COOKIE_SAMESITE" => "Lax",

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Class for table
@@ -208,7 +208,7 @@ class DbTable extends DbTableBase
     // Export return page
     public function exportReturnUrl()
     {
-        $url = @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_EXPORT_RETURN_URL")];
+        $url = Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_EXPORT_RETURN_URL"));
         return ($url != "") ? $url : CurrentPageUrl();
     }
 
@@ -220,7 +220,7 @@ class DbTable extends DbTableBase
     // Records per page
     public function getRecordsPerPage()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_REC_PER_PAGE")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_REC_PER_PAGE"));
     }
 
     public function setRecordsPerPage($v)
@@ -231,7 +231,7 @@ class DbTable extends DbTableBase
     // Start record number
     public function getStartRecordNumber()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_START_REC")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_START_REC"));
     }
 
     public function setStartRecordNumber($v)
@@ -314,7 +314,7 @@ class DbTable extends DbTableBase
     // Search WHERE clause
     public function getSearchWhere()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SEARCH_WHERE")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SEARCH_WHERE"));
     }
 
     public function setSearchWhere($v)
@@ -325,7 +325,7 @@ class DbTable extends DbTableBase
     // Session WHERE clause
     public function getSessionWhere()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_WHERE")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_WHERE"));
     }
 
     public function setSessionWhere($v)
@@ -336,7 +336,7 @@ class DbTable extends DbTableBase
     // Session ORDER BY
     public function getSessionOrderBy()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY"));
     }
 
     public function setSessionOrderBy($v)

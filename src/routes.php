@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
@@ -159,7 +159,9 @@ return function (App $app) {
     $app->get('/' . Config("SWAGGER_ACTION"), OthersController::class . ':swagger')->setName(Config("SWAGGER_ACTION")); // Swagger
 
     // Index
-    $app->any('/[index]', OthersController::class . ':index')->setName('index');
+    $app->any('/[index]', OthersController::class . ':index')->add(PermissionMiddleware::class)->setName('index');
+
+    // Route Action event
     if (function_exists(PROJECT_NAMESPACE . "Route_Action")) {
         Route_Action($app);
     }

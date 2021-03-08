@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -120,7 +120,6 @@ class BukuEdit extends Buku
 
         // Initialize
         $GLOBALS["Page"] = &$this;
-        $this->TokenTimeout = SessionTimeoutTime();
 
         // Language object
         $Language = Container("language");
@@ -161,6 +160,30 @@ class BukuEdit extends Buku
         return is_object($Response) ? $Response->getBody() : ob_get_clean();
     }
 
+    // Is lookup
+    public function isLookup()
+    {
+        return SameText(Route(0), Config("API_LOOKUP_ACTION"));
+    }
+
+    // Is AutoFill
+    public function isAutoFill()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autofill");
+    }
+
+    // Is AutoSuggest
+    public function isAutoSuggest()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autosuggest");
+    }
+
+    // Is modal lookup
+    public function isModalLookup()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "modal");
+    }
+
     // Is terminated
     public function isTerminated()
     {
@@ -178,7 +201,7 @@ class BukuEdit extends Buku
         if ($this->terminated) {
             return;
         }
-        global $ExportFileName, $TempImages, $DashboardReport;
+        global $ExportFileName, $TempImages, $DashboardReport, $Response;
 
         // Page is terminated
         $this->terminated = true;
@@ -224,6 +247,11 @@ class BukuEdit extends Buku
                 WriteJson(array_merge(["success" => false], $this->getMessages()));
             }
             return;
+        } else { // Check if response is JSON
+            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+                $this->clearMessages();
+                return;
+            }
         }
 
         // Go to URL if specified
@@ -415,6 +443,13 @@ class BukuEdit extends Buku
     public $IsMobileOrModal = false;
     public $DbMasterFilter;
     public $DbDetailFilter;
+    public $HashValue; // Hash Value
+    public $DisplayRecords = 1;
+    public $StartRecord;
+    public $StopRecord;
+    public $TotalRecords = 0;
+    public $RecordRange = 10;
+    public $RecordCount;
 
     /**
      * Page run
@@ -499,7 +534,7 @@ class BukuEdit extends Buku
                 }
 
                 // Get key from Form
-                $this->setKey(Post($this->OldKeyName));
+                $this->setKey(Post($this->OldKeyName), $this->isShow());
             } else {
                 $this->CurrentAction = "show"; // Default action is display
 
@@ -594,7 +629,7 @@ class BukuEdit extends Buku
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
             // Pass table and field properties to client side
-            $this->toClientVar(["tableCaption"], ["caption", "Required", "IsInvalid", "Raw"]);
+            $this->toClientVar(["tableCaption"], ["caption", "Visible", "Required", "IsInvalid", "Raw"]);
 
             // Setup login status
             SetupLoginStatus();
@@ -1214,6 +1249,7 @@ class BukuEdit extends Buku
         $this->CurrentFilter = $filter;
         $sql = $this->getCurrentSql();
         $rsold = $conn->fetchAssoc($sql);
+        $editRow = false;
         if (!$rsold) {
             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
             $editRow = false; // Update Failed
@@ -1300,7 +1336,11 @@ class BukuEdit extends Buku
             $updateRow = $this->rowUpdating($rsold, $rsnew);
             if ($updateRow) {
                 if (count($rsnew) > 0) {
-                    $editRow = $this->update($rsnew, "", $rsold);
+                    try {
+                        $editRow = $this->update($rsnew, "", $rsold);
+                    } catch (\Exception $e) {
+                        $this->setFailureMessage($e->getMessage());
+                    }
                 } else {
                     $editRow = true; // No field to update
                 }

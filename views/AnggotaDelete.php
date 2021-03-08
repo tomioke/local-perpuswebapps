@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $AnggotaDelete = &$Page;
@@ -20,6 +20,9 @@ loadjs.ready("head", function () {
 loadjs.ready("head", function () {
     // Write your table-specific client script here, no need to add script tags.
 });
+</script>
+<script>
+if (!ew.vars.tables.anggota) ew.vars.tables.anggota = <?= JsonEncode(GetClientVar("tables", "anggota")) ?>;
 </script>
 <?php $Page->showPageHeader(); ?>
 <?php

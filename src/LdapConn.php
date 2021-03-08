@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * LDAP class
@@ -9,26 +9,36 @@ class LdapConn
 {
     public $Conn; // LDAP server connection
     public $Dn = ""; // Default Distinguished Name, e.g. uid={username},ou=users,dc=demo,dc=com, "{username}" will be replaced by inputted user name
+    public $Host = "";
+    public $Port = 389;
     public $Options = [LDAP_OPT_PROTOCOL_VERSION => 3, LDAP_OPT_REFERRALS => 0];
     public $User = "";
     protected $Bind = false;
     protected $Auth = false;
 
     // Constructor
-    public function __construct ($hostname = "", $port = 389, $options = [])
+    public function __construct($hostname = "", $port = 0, $options = null)
     {
         if (function_exists("ldap_connect")) {
-            $this->Conn = ldap_connect($hostname, $port);
+            if ($hostname) {
+                $this->Host = $hostname;
+            }
+            if ($port > 0) {
+                $this->Port = $port;
+            }
             if (is_array($options)) {
                 $this->Options = $options + $this->Options;
             }
+            $this->Conn = ldap_connect($this->Host, $this->Port);
             if (is_array($this->Options)) {
                 foreach ($this->Options as $key => $value) {
-                    ldap_set_option($this->Conn, $key, $value) or throw new \Exception("Unable to set LDAP option: " . $key); //** side effect
+                    if (!ldap_set_option($this->Conn, $key, $value)) {
+                        throw new \Exception("Unable to set LDAP option: " . $key);
+                    }
                 }
             }
         } else {
-            throw new \Exception("LDAP support in PHP is not enabled. To install, see http://php.net/manual/en/ldap.installation.php."); //** side effect
+            throw new \Exception("LDAP support in PHP is not enabled. To install, see http://php.net/manual/en/ldap.installation.php.");
         }
     }
 

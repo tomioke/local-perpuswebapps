@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Upload class
@@ -224,7 +224,7 @@ class HttpUpload
      * Get uploaded file names (with or without full path)
      *
      * @param string $filetoken File token to locate the uploaded temp path
-     * @param boolean $path Return file name with or without full path
+     * @param bool $path Return file name with or without full path
      * @return array
      */
     public function getUploadedFileNames($filetoken, $fullPath = false)
@@ -257,7 +257,7 @@ class HttpUpload
      * Get uploaded file names (with or without full path)
      *
      * @param string $filetoken File token to locate the uploaded temp path
-     * @param boolean $path Return file name with or without full path
+     * @param bool $path Return file name with or without full path
      * @return string
      */
     public function getUploadedFileName($filetoken, $fullPath = false)
@@ -268,9 +268,9 @@ class HttpUpload
     /**
      * Resize image
      *
-     * @param integer $width Target width of image
-     * @param integer $height Target height of image
-     * @param integer $quality optional Deprecated, kept for backward compatibility only.
+     * @param int $width Target width of image
+     * @param int $height Target height of image
+     * @param int $quality optional Deprecated, kept for backward compatibility only.
      * @return HttpUpload
      */
     public function resize($width, $height, $quality = 100)
@@ -306,7 +306,7 @@ class HttpUpload
     /**
      * Get temp file
      *
-     * @param integer $idx
+     * @param int $idx
      * @return object|object[] Instance(s) of thumbnail class (Config("THUMBNAIL_CLASS"))
      */
     public function getTempThumb($idx = -1)
@@ -331,8 +331,8 @@ class HttpUpload
      * Save uploaded data to file
      *
      * @param string $newFileName New file name
-     * @param boolean $overWrite Overwrite existing file or not
-     * @param integer $idx Index of file
+     * @param bool $overWrite Overwrite existing file or not
+     * @param int $idx Index of file
      * @return booleanean
      */
     public function saveToFile($newFileName, $overWrite, $idx = -1)
@@ -361,12 +361,12 @@ class HttpUpload
     /**
      * Resize and save uploaded data to file
      *
-     * @param integer $width Target width of image
-     * @param integer $height Target height of image
-     * @param integer $quality Deprecated, kept for backward compatibility only.
+     * @param int $width Target width of image
+     * @param int $height Target height of image
+     * @param int $quality Deprecated, kept for backward compatibility only.
      * @param string $newFileName New file name
-     * @param boolean $overWrite Overwrite existing file or not
-     * @param integer $idx optional Index of the file
+     * @param bool $overWrite Overwrite existing file or not
+     * @param int $idx optional Index of the file
      * @return HttpUpload
      */
     public function resizeAndSaveToFile($width, $height, $quality, $newFileName, $overWrite, $idx = -1)
@@ -412,7 +412,7 @@ class HttpUpload
     /**
      * Get temp file path
      *
-     * @param integer $idx optional Index of file
+     * @param int $idx optional Index of file
      * @return string|string[]
      */
     public function getTempFile($idx = -1)

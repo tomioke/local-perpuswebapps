@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Field class
@@ -484,7 +484,7 @@ class DbField
     /**
      * Get display field value separator
      *
-     * @param integer $idx Display field index (1|2|3)
+     * @param int $idx Display field index (1|2|3)
      * @return string
      */
     protected function getDisplayValueSeparator($idx)
@@ -728,13 +728,13 @@ class DbField
     // Get sorting order
     public function getSort()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SORT") . "_" . $this->FieldVar];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SORT") . "_" . $this->FieldVar);
     }
 
     // Set sorting order
     public function setSort($v)
     {
-        if (@$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SORT") . "_" . $this->FieldVar] != $v) {
+        if (Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SORT") . "_" . $this->FieldVar) != $v) {
             $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_SORT") . "_" . $this->FieldVar] = $v;
         }
     }
@@ -809,11 +809,11 @@ class DbField
                             $wrkdata = ResizeFileToBinary($imagefn, $wrkwidth, $wrkheight);
                             return TempImage($wrkdata);
                         } else {
-                            if (IsRemote($imagefn)) {
-                                return TempImage(file_get_contents($imagefn));
-                            } else {
-                                return $this->UploadPath . $wrkfile;
-                            }
+                            // if (IsRemote($imagefn)) {
+                                return TempImage(file_get_contents($imagefn)); // Use global upload path to make sure the path is in dompdf's "chroot"
+                            // } else {
+                            //     return $this->UploadPath . $wrkfile; // Do not use $this->UploadPath which may not be in dompdf's "chroot"
+                            // }
                         }
                     }
                 } else {
@@ -837,11 +837,11 @@ class DbField
                                 if ($tmpimage != "") {
                                     $tmpimage .= ",";
                                 }
-                                if (IsRemote($imagefn)) {
-                                    $tmpimage .= TempImage(file_get_contents($imagefn));
-                                } else {
-                                    $tmpimage .= $this->UploadPath . $tmpfile;
-                                }
+                                // if (IsRemote($imagefn)) {
+                                    $tmpimage .= TempImage(file_get_contents($imagefn)); // Use global upload path to make sure the path is in dompdf's "chroot"
+                                // } else {
+                                //     $tmpimage .= $this->UploadPath . $tmpfile; // Do not use $this->UploadPath which may not be in dompdf's "chroot"
+                                // }
                             }
                         }
                     }
@@ -1007,7 +1007,7 @@ class DbField
     // Get session value
     public function getSessionValue()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . $this->FieldVar . "_SessionValue"];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . $this->FieldVar . "_SessionValue");
     }
 
     // Set session value

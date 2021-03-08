@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Langauge class
@@ -24,8 +24,8 @@ class Language
         if (Param("language", "") != "") {
             $this->LanguageId = Param("language");
             $_SESSION[SESSION_LANGUAGE_ID] = $this->LanguageId;
-        } elseif (@$_SESSION[SESSION_LANGUAGE_ID] != "") {
-            $this->LanguageId = $_SESSION[SESSION_LANGUAGE_ID];
+        } elseif (Session(SESSION_LANGUAGE_ID) != "") {
+            $this->LanguageId = Session(SESSION_LANGUAGE_ID);
         } else {
             $this->LanguageId = Config("LANGUAGE_DEFAULT_ID");
         }
@@ -72,8 +72,9 @@ class Language
         if ($fileName == "") {
             return;
         }
-        if (is_array(@$_SESSION[PROJECT_NAME . "_" . $fileName])) {
-            $this->Phrases = $_SESSION[PROJECT_NAME . "_" . $fileName];
+        $phrases = Session(PROJECT_NAME . "_" . $fileName);
+        if (is_array($phrases)) {
+            $this->Phrases = $phrases;
         } else {
             $this->Phrases = Xml2Array(file_get_contents($fileName));
         }

@@ -5,7 +5,7 @@
  * Copyright (c) e.World Technology Limited. All rights reserved.
 */
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -122,7 +122,20 @@ function Container()
     }
     $numargs = func_num_args();
     if ($numargs == 1) { // Get
-        return $container->get(func_get_arg(0));
+        $name = func_get_arg(0);
+        if (is_string($name)) { // $name must be string
+            if ($container->has($name)) {
+                return $container->get($name);
+            } else {
+                $class = PROJECT_NAMESPACE . $name;
+                if (class_exists($class)) {
+                    $obj = new $class();
+                    $container->set($name, $obj);
+                    return $obj;
+                }
+            }
+        }
+        return null;
     } elseif ($numargs == 2) { // Set
         $container->set(func_get_arg(0), func_get_arg(1));
     }
@@ -246,11 +259,115 @@ function Redirect($url)
 /**
  * Is API request
  *
- * @return boolean
+ * @return bool
  */
 function IsApi()
 {
     return $GLOBALS["IsApi"] === true;
+}
+
+/**
+ * Create JWT token
+ *
+ * @param string $userName User name
+ * @param string $userID User ID
+ * @param string $parentUserID Parent User ID
+ * @param string $userLevelID User Level ID
+ * @param int $minExpiry Minimum expiry time (seconds)
+ * @return string JWT token
+ */
+function CreateJwt($userName, $userID, $parentUserID, $userLevelID, $minExpiry = 0)
+{
+    //$tokenId = base64_encode(mcrypt_create_iv(32));
+    $tokenId = base64_encode(openssl_random_pseudo_bytes(32));
+    $issuedAt = time();
+    $notBefore = $issuedAt + Config("JWT.NOT_BEFORE_TIME"); // Adding not before time (seconds)
+    $expire = $notBefore + Config("JWT.EXPIRE_TIME"); // Adding expire time (seconds)
+    $serverName = ServerVar("SERVER_NAME");
+    if ($minExpiry > 0) {
+        $notBefore = 0;
+        $expire = $minExpiry;
+    }
+
+    // Create the token as an array
+    $ar = [
+        "iat" => $issuedAt, // Issued at: time when the token was generated
+        "jti" => $tokenId, // Json Token Id: a unique identifier for the token
+        "iss" => $serverName, // Issuer
+        "nbf" => $notBefore, // Not before
+        "exp" => $expire, // Expire
+        "security" => [ // Data related to the signer user
+            "username" => $userName, // User name
+            "userid" => $userID, // User ID
+            "parentuserid" => $parentUserID, // Parent user ID
+            "userlevelid" => $userLevelID // User Level ID
+        ]
+    ];
+    $jwt = \Firebase\JWT\JWT::encode(
+        $ar, // Data to be encoded in the JWT
+        Config("JWT.SECRET_KEY"), // The signing key
+        Config("JWT.ALGORITHM") // Algorithm used to sign the token, see https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40#section-3
+    );
+    WriteCookie("JWT", $jwt, $expire, true, true); // Write HttpOnly cookie
+    return ["JWT" => $jwt];
+}
+
+/**
+ * Decode JWT token
+ *
+ * @param string $token Bearer token
+ * @return array
+ */
+function DecodeJwt($token)
+{
+    try {
+        $ar = (array)\Firebase\JWT\JWT::decode($token, Config("JWT.SECRET_KEY"), [Config("JWT.ALGORITHM")]);
+        return (array)$ar["security"];
+    } catch (\Firebase\JWT\BeforeValidException $e) {
+        if (Config("DEBUG")) {
+            return ["failureMessage" => "BeforeValidException: " . $e->getMessage()];
+        }
+    } catch (\Firebase\JWT\ExpiredException $e) {
+        if (Config("DEBUG")) {
+            return ["failureMessage" => "ExpiredException: " . $e->getMessage()];
+        }
+    } catch (\Throwable $e) {
+        if (Config("DEBUG")) {
+            return ["failureMessage" => "Exception: " . $e->getMessage()];
+        }
+    }
+    return [];
+}
+
+/**
+ * Get JWT token
+ *
+ * @return string JWT token
+ */
+function GetJwtToken()
+{
+    global $Security;
+    $expiry = time() + max(Config("SESSION_TIMEOUT") * 60, Config("JWT.EXPIRE_TIME"), ini_get("session.gc_maxlifetime"));
+    $token = isset($Security) ? $Security->createJwt($expiry) : CreateJwt(null, null, null, "-2", $expiry);
+    return $token["JWT"] ?? "";
+}
+
+/**
+ * Use Session
+ *
+ * @param Request $request Request
+ * @return bool
+ */
+function UseSession($request)
+{
+    if (!HasParamWithPrefix(Config("CSRF_PREFIX")))
+        return false;
+    $params = $request->getServerParams();
+    $uri = $params["REQUEST_URI"] ?? ""; // e.g. /basepath/api/file
+    $basePath = BasePath(true); // e.g. /basepath/api/
+    $uri = preg_replace("/^" . preg_quote($basePath, "/")  . "/", "", $uri);
+    $action = explode("/", $uri)[0];
+    return !in_array($action, Config("SESSIONLESS_API_ACTIONS"));
 }
 
 /**
@@ -267,7 +384,7 @@ function RequestMethod()
 /**
  * Is GET request
  *
- * @return boolean
+ * @return bool
  */
 function IsGet()
 {
@@ -277,7 +394,7 @@ function IsGet()
 /**
  * Is POST request
  *
- * @return boolean
+ * @return bool
  */
 function IsPost()
 {
@@ -288,7 +405,7 @@ function IsPost()
  * Has Param data with prefix
  *
  * @param string $prefix Prefix of parameter
- * @return boolean
+ * @return bool
 */
 function HasParamWithPrefix($prefix)
 {
@@ -299,7 +416,7 @@ function HasParamWithPrefix($prefix)
  * Has querystring data with prefix
  *
  * @param string $prefix Prefix of parameter
- * @return boolean
+ * @return bool
 */
 function HasGetParamWithPrefix($prefix)
 {
@@ -311,7 +428,7 @@ function HasGetParamWithPrefix($prefix)
  * Has post data with prefix
  *
  * @param string $prefix Prefix of paramter
- * @return boolean
+ * @return bool
 */
 function HasPostParamWithPrefix($prefix)
 {
@@ -324,7 +441,7 @@ function HasPostParamWithPrefix($prefix)
  *
  * @param array $ar Array
  * @param string $prefix Prefix of paramter
- * @return boolean
+ * @return bool
 */
 function ArrayKeyWithPrefix($ar, $prefix)
 {
@@ -389,7 +506,7 @@ function Param($name, $default = null)
 /**
  * Get key data from Param("key")
  *
- * @param integer $i The nth (0-based) key
+ * @param int $i The nth (0-based) key
  * @return string|null
  */
 function Key($i = 0)
@@ -405,13 +522,13 @@ function Key($i = 0)
 /**
  * Get route data
  *
- * @param integer|"key" $i The nth (0-based) route value or "key" (API only)
+ * @param int|"key" $i The nth (0-based) route value or "key" (API only)
  * @return string|string[]|null
  */
 function Route($i = null)
 {
     $routeValues = $GLOBALS["RouteValues"] ?? [];
-    if (IsApi() && $i == Config("API_KEY_NAME")) { // Get record key separated by key separator (for API "/file/object/field/key" action)
+    if (IsApi() && $i === Config("API_KEY_NAME")) { // Get record key separated by key separator (for API "/file/object/field/key" action)
         $routeValues = array_slice($routeValues, 3);
         return implode(Config("COMPOSITE_KEY_SEPARATOR"), $routeValues);
     } elseif (is_string($i)) { // Get route value by name
@@ -465,7 +582,7 @@ function SetStatus($code)
  * Output JSON data (UTF-8)
  *
  * @param mixed $data Data to be encoded and outputted (non UTF-8)
- * @param integer $encodingOptions optional JSON encoding options (same as that of json_encode())
+ * @param int $encodingOptions optional JSON encoding options (same as that of json_encode())
  * @return void
  */
 function WriteJson($data, $encodingOptions = 0)
@@ -496,7 +613,7 @@ function WriteJson($data, $encodingOptions = 0)
  *
  * @param string $name Header name
  * @param string $value Header value
- * @param boolean $replace optional Replace a previous similar header, or add a second header of the same type. Default is true.
+ * @param bool $replace optional Replace a previous similar header, or add a second header of the same type. Default is true.
  * @return void
  */
 function AddHeader($name, $value, $replace = true)
@@ -542,9 +659,9 @@ function ReadCookie($name)
 }
 
 /**
- * Use has given consent to track cookie
+ * User has given consent to track cookie
  *
- * @return boolean
+ * @return bool
  */
 function CanTrackCookie()
 {
@@ -568,11 +685,12 @@ function CreateConsentCookie()
  *
  * @param string $name Cookie name
  * @param string $value Cookie value
- * @param integer $expiry optional Cookie expiry time. Default is Config("COOKIE_EXPIRY_TIME")
- * @param boolean $essential optional Essential cookie, set even without user consent. Default is true
+ * @param int $expiry optional Cookie expiry time. Default is Config("COOKIE_EXPIRY_TIME")
+ * @param bool $essential optional Essential cookie, set even without user consent. Default is true.
+ * @param bool $httpOnly optional HTTP only. Default is false.
  * @return void
  */
-function WriteCookie($name, $value, $expiry = -1, $essential = true)
+function WriteCookie($name, $value, $expiry = -1, $essential = true, $httpOnly = false)
 {
     $expiry = ($expiry > -1) ? $expiry : Config("COOKIE_EXPIRY_TIME");
     if ($essential || CanTrackCookie()) {
@@ -580,8 +698,8 @@ function WriteCookie($name, $value, $expiry = -1, $essential = true)
         $cookie->setValue($value);
         $cookie->setExpiryTime($expiry);
         $cookie->setSameSiteRestriction(Config("COOKIE_SAMESITE"));
-        $cookie->setHttpOnly(Config("COOKIE_HTTP_ONLY"));
-        $cookie->setSecureOnly(Config("COOKIE_SAMESITE") == "None" || Config("COOKIE_SECURE"));
+        $cookie->setHttpOnly($httpOnly || Config("COOKIE_HTTP_ONLY"));
+        $cookie->setSecureOnly(Config("COOKIE_SAMESITE") == "None" || IsHttps() && Config("COOKIE_SECURE"));
         $cookie->save();
     }
 }
@@ -619,7 +737,7 @@ function CurrentLanguageID()
 /**
  * Is RTL language
  *
- * @return boolean
+ * @return bool
  */
 function IsRTL()
 {
@@ -734,7 +852,7 @@ function GetForeignKeyUrl($name, $val, $dateFormat = null)
     $url = $name . "=";
     if ($val === null) {
         $val = Config("NULL_VALUE");
-    } elseif ($val == "") {
+    } elseif ($val === "") {
         $val = Config("EMPTY_VALUE");
     } elseif ($dateFormat !== null && is_numeric($dateFormat)) {
         $val = UnFormatDateTime($val, $dateFormat);
@@ -916,11 +1034,7 @@ function GetFileTempImage($fld, $val)
 // Get API action URL // PHP
 function GetApiUrl($action, $query = "")
 {
-    if (Config("USE_URL_REWRITE")) {
-        return GetUrl(Config("API_URL") . $action) . ($query ? "?" : "") . $query;
-    } else {
-        return GetUrl(Config("API_URL")) . "?" . Config("API_ACTION_NAME") . "=" . $action . ($query ? "&" : "") . $query;
-    }
+    return GetUrl(Config("API_URL") . $action) . ($query ? "?" : "") . $query;
 }
 
 // Get file upload URL
@@ -1312,7 +1426,8 @@ function GetConnection($dbid = 0)
 function GetConnectionId($dbid = 0)
 {
     $conn = Conn($dbid);
-    return $conn->getWrappedResourceHandle();
+    $c = $conn->getWrappedConnection();
+    return method_exists($c, "getWrappedResourceHandle") ? $c->getWrappedResourceHandle() : $c;
 }
 
 // Get connection info
@@ -1340,7 +1455,7 @@ function ConnectDb($info)
     $dbid = @$info["id"];
     $dbtype = @$info["type"];
     if ($dbtype == "MYSQL") {
-        $info["driver"] = "pdo_mysql";
+        $info["driver"] = $info["driver"] ?? "pdo_mysql";
         if (Config("MYSQL_CHARSET") != "" && !array_key_exists("charset", $info)) {
             $info["charset"] = Config("MYSQL_CHARSET");
         }
@@ -1353,7 +1468,7 @@ function ConnectDb($info)
             $info["charset"] = Config("POSTGRESQL_CHARSET");
         }
     } elseif ($dbtype == "MSSQL") {
-        $info["driver"] = "sqlsrv";
+        $info["driver"] = $info["driver"] ?? "sqlsrv";
         $info["driverOptions"] = $info["driverOptions"] ?? [];
         // Use TransactionIsolation = SQLSRV_TXN_READ_UNCOMMITTED to avoid record locking
         // https://docs.microsoft.com/en-us/sql/t-sql/statements/set-transaction-isolation-level-transact-sql?view=sql-server-ver15
@@ -1647,7 +1762,9 @@ function GetMultiSearchSql(&$fld, $fldOpr, $fldVal, $dbid)
                 } elseif ($val == Config("NOT_NULL_VALUE")) {
                     $sql = $fld->Expression . " IS NOT NULL";
                 } else {
-                    if ($dbtype == "MYSQL" && in_array($fldOpr, ["=", "<>"])) {
+                    if ($fld->DataType == DATATYPE_NUMBER && is_numeric($val) && in_array($fldOpr, ["=", "<>"])) {
+                        $sql = $fld->Expression . " " . $fldOpr . " " . AdjustSql($val, $dbid);
+                    } elseif ($dbtype == "MYSQL" && in_array($fldOpr, ["=", "<>"])) {
                         $sql = "FIND_IN_SET('" . AdjustSql($val, $dbid) . "', " . $fld->Expression . ")";
                         if ($fldOpr == "<>") {
                             $sql = "NOT " . $sql;
@@ -2250,8 +2367,8 @@ function UnformatShortTime($tm)
 /**
  * Format a timestamp, datetime, date or time field
  *
- * @param integer|string timestamp or datetime, date or time field value
- * @param integer $namedformat
+ * @param int|string timestamp or datetime, date or time field value
+ * @param int $namedformat
  *  0 - Default date format
  *  1 - Long Date (with time)
  *  2 - Short Date (without time)
@@ -2268,8 +2385,8 @@ function UnformatShortTime($tm)
  *  13 - Short Date - 2 digit year (mm/dd/yy)
  *  14 - Short Date - 2 digit year (dd/mm/yy)
  *  15/115 - Short Date (yy/mm/dd) + Short Time (hh:mm[:ss])
- *  16/116 - Short Date (mm/dd/yyyy) + Short Time (hh:mm[:ss])
- *  17/117 - Short Date (dd/mm/yyyy) + Short Time (hh:mm[:ss])
+ *  16/116 - Short Date (mm/dd/yy) + Short Time (hh:mm[:ss])
+ *  17/117 - Short Date (dd/mm/yy) + Short Time (hh:mm[:ss])
  * @return string
  */
 function FormatDateTime($ts, $namedformat)
@@ -2550,12 +2667,12 @@ function FormatDateTime($ts, $namedformat)
  * Format currency
  *
  * @param float $amount
- * @param integer $numDigitsAfterDecimal Numeric value indicating how many places to the right of the decimal are displayed
+ * @param int $numDigitsAfterDecimal Numeric value indicating how many places to the right of the decimal are displayed
  *  -1 Use Default
  *  -2 Retain all values after decimal place
- * @param integer $includeLeadingDigit optional Includes leading digits: 1 (True), 0 (False), or -2 (Use default)
- * @param integer $useParensForNegativeNumbers optional Use parenthesis for negative numbers: 1 (True), 0 (False), or -2 (Use default)
- * @param integer $groupDigits optional Use group digits: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $includeLeadingDigit optional Includes leading digits: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $useParensForNegativeNumbers optional Use parenthesis for negative numbers: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $groupDigits optional Use group digits: 1 (True), 0 (False), or -2 (Use default)
  * @return string
  */
 function FormatCurrency($amount, $numDigitsAfterDecimal, $includeLeadingDigit = -2, $useParensForNegativeNumbers = -2, $groupDigits = -2)
@@ -2653,12 +2770,12 @@ function FormatCurrency($amount, $numDigitsAfterDecimal, $includeLeadingDigit = 
  * Format number
  *
  * @param float $amount
- * @param integer $numDigitsAfterDecimal Numeric value indicating how many places to the right of the decimal are displayed
+ * @param int $numDigitsAfterDecimal Numeric value indicating how many places to the right of the decimal are displayed
  *  -1 Use Default
  *  -2 Retain all values after decimal place
- * @param integer $includeLeadingDigit optional Includes leading digits: 1 (True), 0 (False), or -2 (Use default)
- * @param integer $useParensForNegativeNumbers optional Use parenthesis for negative numbers: 1 (True), 0 (False), or -2 (Use default)
- * @param integer $groupDigits optional Use group digits: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $includeLeadingDigit optional Includes leading digits: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $useParensForNegativeNumbers optional Use parenthesis for negative numbers: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $groupDigits optional Use group digits: 1 (True), 0 (False), or -2 (Use default)
  * @return string
  */
 function FormatNumber($amount, $numDigitsAfterDecimal, $includeLeadingDigit = -2, $useParensForNegativeNumbers = -2, $groupDigits = -2)
@@ -2725,11 +2842,11 @@ function FormatNumber($amount, $numDigitsAfterDecimal, $includeLeadingDigit = -2
  * Format percent
  *
  * @param float $amount
- * @param integer $numDigitsAfterDecimal Numeric value indicating how many places to the right of the decimal are displayed
+ * @param int $numDigitsAfterDecimal Numeric value indicating how many places to the right of the decimal are displayed
  *  -1 Use Default
- * @param integer $includeLeadingDigit optional Includes leading digits: 1 (True), 0 (False), or -2 (Use default)
- * @param integer $useParensForNegativeNumbers optional Use parenthesis for negative numbers: 1 (True), 0 (False), or -2 (Use default)
- * @param integer $groupDigits optional Use group digits: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $includeLeadingDigit optional Includes leading digits: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $useParensForNegativeNumbers optional Use parenthesis for negative numbers: 1 (True), 0 (False), or -2 (Use default)
+ * @param int $groupDigits optional Use group digits: 1 (True), 0 (False), or -2 (Use default)
  * @return string
  */
 function FormatPercent($amount, $numDigitsAfterDecimal, $includeLeadingDigit = -2, $useParensForNegativeNumbers = -2, $groupDigits = -2)
@@ -2795,7 +2912,7 @@ function FormatSequenceNumber($seq)
 /**
  * Display field value separator
  *
- * @param integer $idx Display field index (1|2|3)
+ * @param int $idx Display field index (1|2|3)
  * @param DbField $fld field object
  * @return string
  */
@@ -2813,8 +2930,8 @@ function ValueSeparator($idx, $fld)
  *  If NULL, return physical path of the temp upload folder.
  *  If string, return physical path of the temp upload folder with the parameter as part of the subpath.
  *  If object (DbField), return physical path of the temp upload folder with tblvar/fldvar as part of the subpath.
- * @param integer $idx Index of the field
- * @param boolean $tableLevel Table level or field level
+ * @param int $idx Index of the field
+ * @param bool $tableLevel Table level or field level
  * @return string
  */
 function UploadTempPath($fld = null, $idx = -1, $tableLevel = false)
@@ -3084,7 +3201,7 @@ function IsEmptyPath($folder)
  * Truncate memo field based on specified length, string truncated to nearest whitespace
  *
  * @param string $memostr String to be truncated
- * @param integer $maxlen Max. length
+ * @param int $maxlen Max. length
  * @param bool $removehtml Remove HTML or not
  * @return string
  */
@@ -3251,6 +3368,7 @@ function SendEmail($fromEmail, $toEmail, $ccEmail, $bccEmail, $subject, $mailCon
     $res = $mail->send();
     if (Config("DEBUG") && $mail->ErrorInfo != "") { // There may be error even if $res is true
         SetDebugMessage($mail->ErrorInfo, $mail->SMTPDebug);
+        Log($mail->ErrorInfo);
     }
     if (!$res) {
         $res = $mail->ErrorInfo;
@@ -3381,7 +3499,6 @@ function ServerMapPath($path, $isFile = false)
 // Write info for config/debug only
 function Info()
 {
-    global $Security;
     echo "UPLOAD_DEST_PATH = " . Config("UPLOAD_DEST_PATH") . "<br>";
     echo "AppRoot(true) = " . AppRoot(true) . "<br>";
     echo "AppRoot(false) = " . AppRoot(false) . "<br>";
@@ -3394,9 +3511,7 @@ function Info()
     echo "IsLoggedIn() = " . (IsLoggedIn() ? "true" : "false") . "<br>";
     echo "IsAdmin() = " . (IsAdmin() ? "true" : "false") . "<br>";
     echo "IsSysAdmin() = " . (IsSysAdmin() ? "true" : "false") . "<br>";
-    if (isset($Security)) {
-        $Security->showUserLevelInfo();
-    }
+    Security()->showUserLevelInfo();
 }
 
 /**
@@ -3404,7 +3519,7 @@ function Info()
  *
  * @param string|string[] $folders Output folder(s)
  * @param string $orifn Original file name
- * @param boolean $indexed Index starts from '(n)' at the end of the original file name
+ * @param bool $indexed Index starts from '(n)' at the end of the original file name
  * @return string
  */
 function UniqueFilename($folders, $orifn, $indexed = false)
@@ -3492,7 +3607,7 @@ function TempFolder()
  * See https://github.com/aws/aws-sdk-php/blob/master/src/S3/StreamWrapper.php
  *
  * @param string $dir Directory
- * @param integer $mode Permissions
+ * @param int $mode Permissions
  * @return bool
  */
 function CreateFolder($dir, $mode = 0)
@@ -3510,7 +3625,7 @@ function SaveFile($folder, $fn, $filedata)
         if (IsRemote($file)) { // Support S3 only
             $res = file_put_contents($file, $filedata);
         } else {
-            $res = file_put_contents($file, $filedata, LOCK_EX);
+            $res = file_put_contents($file, $filedata, Config("SAVE_FILE_OPTIONS"));
         }
         if ($res !== false) {
             @chmod($file, Config("UPLOADED_FILE_MODE"));
@@ -3797,7 +3912,7 @@ function CurrentWindowsUser()
 /**
  * Get current date in default date format
  *
- * @param integer $namedformat Format = -1|5|6|7 (see comment for FormatDateTime)
+ * @param int $namedformat Format = -1|5|6|7 (see comment for FormatDateTime)
  * @return string
  */
 function CurrentDate($namedformat = -1)
@@ -3825,7 +3940,7 @@ function CurrentTime()
 /**
  * Get current date in default date format with time in hh:mm:ss format
  *
- * @param integer $namedformat Format = -1, 5-7, 9-11 (see comment for FormatDateTime)
+ * @param int $namedformat Format = -1, 5-7, 9-11 (see comment for FormatDateTime)
  * @return string
  */
 function CurrentDateTime($namedformat = -1)
@@ -3932,35 +4047,58 @@ function ComparePassword($pwd, $input)
 }
 
 // Get security object
-function &Security()
+function Security()
 {
-    $security = Container("security");
-    return $security;
+    global $Security;
+    $Security = $Security ?? Container("security") ?? new AdvancedSecurity();
+    return $Security;
+}
+
+/**
+ * Session helper
+ *
+ * @return mixed Session value or HttpSession
+ */
+function Session()
+{
+    $numargs = func_num_args();
+    if ($numargs == 1) { // Get
+        $name = func_get_arg(0);
+        return $_SESSION[$name] ?? null;
+    } elseif ($numargs == 2) { // Set
+        list($name, $value) = func_get_args();
+        $_SESSION[$name] = $value;
+    }
+    global $Session;
+    $Session = $Session ?? Container("session");
+    return $Session;
 }
 
 // Get profile value
 function Profile()
 {
-    $profile = Container("profile");
+    global $UserProfile;
+    $UserProfile = $UserProfile ?? Container("profile");
     $numargs = func_num_args();
     if ($numargs == 1) { // Get
-        return $profile->get(func_get_arg(0));
+        $name = func_get_arg(0);
+        return $UserProfile->get($name);
     } elseif ($numargs == 2) { // Set
-        $profile->set(func_get_arg(0), func_get_arg(1));
-        $profile->save();
+        list($name, $value) = func_get_args();
+        $UserProfile->set($name, $value);
+        $UserProfile->save();
     }
-    return $profile;
+    return $UserProfile;
 }
 
 // Get language object
-function &Language()
+function Language()
 {
-    $language = Container("language");
-    return $language;
+    return Container("language");
 }
 
 // Get breadcrumb object
-function &Breadcrumb()
+function Breadcrumb()
 {
     return $GLOBALS["Breadcrumb"];
 }
@@ -3989,36 +4127,37 @@ function Log($msg, array $context = [])
 // Get current user name
 function CurrentUserName()
 {
-    global $Security;
-    return isset($Security) ? $Security->currentUserName() : strval(@$_SESSION[SESSION_USER_NAME]);
+    return isset($_SESSION[SESSION_USER_NAME]) ? strval($_SESSION[SESSION_USER_NAME]) : Security()->currentUserName();
 }
 
 // Get current user ID
 function CurrentUserID()
 {
-    global $Security;
-    return isset($Security) ? $Security->currentUserID() : strval(@$_SESSION[SESSION_USER_ID]);
+    return Security()->currentUserID();
 }
 
 // Get current parent user ID
 function CurrentParentUserID()
 {
-    global $Security;
-    return isset($Security) ? $Security->currentParentUserID() : strval(@$_SESSION[SESSION_PARENT_USER_ID]);
+    return Security()->currentParentUserID();
 }
 
 // Get current user level
 function CurrentUserLevel()
 {
-    global $Security;
-    return isset($Security) ? $Security->currentUserLevelID() : @$_SESSION[SESSION_USER_LEVEL_ID];
+    return Security()->currentUserLevelID();
+}
+
+// Get current user level name
+function CurrentUserLevelName()
+{
+    return Security()->currentUserLevelName();
 }
 
 // Get current user level list
 function CurrentUserLevelList()
 {
-    global $Security;
-    return isset($Security) ? $Security->userLevelList() : strval(@$_SESSION[SESSION_USER_LEVEL_LIST]);
+    return Security()->userLevelList();
 }
 
 // Get Current user info
@@ -4092,68 +4231,55 @@ function CurrentPageID()
 // Allow list
 function AllowList($tableName)
 {
-    global $Security;
-    return $Security->allowList($tableName);
+    return Security()->allowList($tableName);
 }
 
 // Allow add
 function AllowAdd($tableName)
 {
-    global $Security;
-    return $Security->allowAdd($tableName);
+    return Security()->allowAdd($tableName);
 }
 
 // Is password expired
 function IsPasswordExpired()
 {
-    global $Security;
-    return isset($Security) ? $Security->isPasswordExpired() : (@$_SESSION[SESSION_STATUS] == "passwordexpired");
+    return Session(SESSION_STATUS) == "passwordexpired";
 }
 
 // Set session password expired
 function SetSessionPasswordExpired()
 {
-    global $Security;
-    if (isset($Security)) {
-        $Security->setSessionPasswordExpired();
-    } else {
-        $_SESSION[SESSION_STATUS] = "passwordexpired";
-    }
+    return Security()->setSessionPasswordExpired();
 }
 
 // Is password reset
 function IsPasswordReset()
 {
-    global $Security;
-    return isset($Security) ? $Security->isPasswordReset() : (@$_SESSION[SESSION_STATUS] == "passwordreset");
+    return Session(SESSION_STATUS) == "passwordreset";
 }
 
 // Is logging in
 function IsLoggingIn()
 {
-    global $Security;
-    return isset($Security) ? $Security->isLoggingIn() : (@$_SESSION[SESSION_STATUS] == "loggingin");
+    return Session(SESSION_STATUS) == "loggingin";
 }
 
 // Is logged in
 function IsLoggedIn()
 {
-    global $Security;
-    return isset($Security) ? $Security->isLoggedIn() : (@$_SESSION[SESSION_STATUS] == "login");
+    return Session(SESSION_STATUS) == "login" || Security()->isLoggedIn();
 }
 
 // Is admin
 function IsAdmin()
 {
-    global $Security;
-    return isset($Security) ? $Security->isAdmin() : (@$_SESSION[SESSION_SYS_ADMIN] == 1);
+    return Session(SESSION_SYS_ADMIN) === 1 || Security()->isAdmin();
 }
 
 // Is system admin
 function IsSysAdmin()
 {
-    global $Security;
-    return isset($Security) ? $Security->isSysAdmin() : (@$_SESSION[SESSION_SYS_ADMIN] == 1);
+    return Session(SESSION_SYS_ADMIN) === 1 || Security()->isSysAdmin();
 }
 
 // Is Windows authenticated
@@ -4244,7 +4370,14 @@ function ClientUrl($url, $postdata = "", $method = "GET")
     return $res;
 }
 
-// Calculate date difference
+/**
+ * Calculate date difference
+ *
+ * @param string $dateTimeBegin Begin date
+ * @param string $dateTimeEnd End date
+ * @param string $interval Interval: "s": Seconds, "n": Minutes, "h": Hours, "d": Days (default), "w": Weeks, "ww": Calendar weeks, "m": Months, or "yyyy": Years
+ * @return int
+ */
 function DateDiff($dateTimeBegin, $dateTimeEnd, $interval = "d")
 {
     $dateTimeBegin = strtotime($dateTimeBegin);
@@ -4327,13 +4460,6 @@ function SetDebugMessage($v, $level = 0)
     $DebugMessage .= "<p><samp>" . (isset($DebugTimer) ? number_format($DebugTimer->getElapsedTime(), 6) . ": " : "") . $v . "</samp></p>";
 }
 
-// Show debug message
-function ShowDebugMessage()
-{
-    global $DebugMessage;
-    return Config("DEBUG") ? $DebugMessage : "";
-}
-
 // Save global debug message
 function SaveDebugMessage()
 {
@@ -4348,7 +4474,7 @@ function LoadDebugMessage()
 {
     global $DebugMessage;
     if (Config("DEBUG")) {
-        $DebugMessage = @$_SESSION["DEBUG_MESSAGE"];
+        $DebugMessage = Session("DEBUG_MESSAGE");
         $_SESSION["DEBUG_MESSAGE"] = "";
     }
 }
@@ -4900,7 +5026,7 @@ function VarToJson($val, $type = null)
  * If asscociative array, elements with integer key will not be outputted.
  *
  * @param array $ar The array being encoded
- * @param integer $offset The number of entries to skip
+ * @param int $offset The number of entries to skip
  * @return string (No conversion to UTF-8)
  */
 function ArrayToJson(array $ar, $offset = 0)
@@ -4930,7 +5056,7 @@ function ArrayToJson(array $ar, $offset = 0)
  * JSON encode
  *
  * @param mixed $val The value being encoded
- * @param integer|string $option optional Specifies offset if $val is array, or else specifies data type
+ * @param int|string $option optional Specifies offset if $val is array, or else specifies data type
  * @return string (non UTF-8)
  */
 function JsonEncode($val, $option = null)
@@ -4948,9 +5074,9 @@ function JsonEncode($val, $option = null)
  * JSON decode
  *
  * @param string $val The JSON string being decoded (non UTF-8)
- * @param boolean $assoc optional When true, returned objects will be converted into associative arrays.
- * @param integer $depth optional User specified recursion depth
- * @param integer $options optional Bitmask of JSON decode options:
+ * @param bool $assoc optional When true, returned objects will be converted into associative arrays.
+ * @param int $depth optional User specified recursion depth
+ * @param int $options optional Bitmask of JSON decode options:
  *  JSON_BIGINT_AS_STRING - allows casting big integers to string instead of floats
  *  JSON_OBJECT_AS_ARRAY - same as setting assoc to true
  * @return void NULL is returned if the json cannot be decoded or if the encoded data is deeper than the recursion limit.
@@ -4972,7 +5098,7 @@ function JsonDecode($val, $assoc = false, $depth = 512, $options = 0)
  *
  * @param callable $callback Predicate
  * @param array $arr Array being tested
- * @return boolean
+ * @return bool
  */
 function ArraySome(callable $callback, array $ar)
 {
@@ -5032,7 +5158,7 @@ function LoadJs($src, $id = "", $options = null)
  * Check boolean attribute
  *
  * @param string $attr Attribute name
- * @return boolean
+ * @return bool
  */
 function IsBooleanAttribute($attr)
 {
@@ -5376,15 +5502,7 @@ function GetPageName($url)
 // Get current user levels as array of user level IDs
 function CurrentUserLevels()
 {
-    global $Security;
-    if (isset($Security)) {
-        return $Security->UserLevelID;
-    } else {
-        if (isset($_SESSION[SESSION_USER_LEVEL_ID])) {
-            return [$_SESSION[SESSION_USER_LEVEL_ID]];
-        }
-        return [];
-    }
+    return Security()->UserLevelID;
 }
 
 // Check if menu item is allowed for current user level
@@ -5399,8 +5517,9 @@ function AllowListMenu($tableName)
         return true;
     } else {
         $priv = 0;
-        if (is_array(@$_SESSION[SESSION_AR_USER_LEVEL_PRIV])) {
-            foreach ($_SESSION[SESSION_AR_USER_LEVEL_PRIV] as $row) {
+        $rows = Session(SESSION_AR_USER_LEVEL_PRIV);
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
                 if (SameString($row[0], $tableName) && in_array($row[1], $userlevels)) {
                     $thispriv = $row[2] ?? 0;
                     $thispriv = (int)$thispriv;
@@ -5601,12 +5720,13 @@ function ExecuteRecordCount($sql, $c = null)
     $rs = null;
     if ($sql instanceof \Doctrine\DBAL\Query\QueryBuilder) { // Query builder
         $queryBuider = clone $sql;
-        $sql = $queryBuider->resetQueryPart("orderBy")->getSQL();
+        $sqlwrk = $queryBuider->resetQueryPart("orderBy")->getSQL();
         $conn = $queryBuider->getConnection();
     } else {
         $conn = $c ?? $GLOBALS["Conn"] ?? Conn();
+        $sqlwrk = $sql;
     }
-    if ($stmt = $conn->executeQuery($sql)) {
+    if ($stmt = $conn->executeQuery($sqlwrk)) {
         $cnt = $stmt->rowCount();
         if ($cnt <= 0) { // Unable to get record count, count directly
             $cnt = 0;
@@ -5648,7 +5768,7 @@ function QueryBuilder($c = null)
         $c = Conn($c);
     }
     $conn = $c ?? $GLOBALS["Conn"] ?? Conn();
-    return $conn->getQueryBuilder();
+    return $conn->createQueryBuilder();
 }
 
 /**
@@ -5739,10 +5859,10 @@ function ExecuteRows($sql, $c = null, $mode = -1)
  *
  * @param string $sql SQL to execute
  * @param array $options {
- *  @var boolean "utf8" Convert to UTF-8, default: true
- *  @var boolean "array" Output as array
- *  @var boolean "firstonly" Output first row only
- *  @var boolean "datatypes" Array of data types, key of array must be same as row(s)
+ *  @var bool "utf8" Convert to UTF-8, default: true
+ *  @var bool "array" Output as array
+ *  @var bool "firstonly" Output first row only
+ *  @var bool "datatypes" Array of data types, key of array must be same as row(s)
  * }
  * @param Connection|string $c Connection object or DB ID
  * @return string
@@ -5950,7 +6070,7 @@ function LocaleConvert()
 /**
  * Get internal default date format (e.g. "yyyy/mm/dd"") from date format (int)
  *
- * @param integer $dateFormat
+ * @param int $dateFormat
  *  5 - Ymd (default)
  *  6 - mdY
  *  7 - dmY
@@ -6206,7 +6326,7 @@ function GetClientVar($key, $subkey = "")
     $value = $ClientVariables[$key] ?? null;
     $subkey = strval($subkey);
     if ($subkey) {
-        if (SameText($key, "tables") && !isset($tables[$subkey])) { // $subkey must be table var
+        if (SameText($key, "tables") && !isset($ClientVariables["tables"][$subkey])) { // $subkey must be table var
             Container($subkey)->ToClientVar(["tableCaption"], ["caption", "Required", "IsInvalid", "Raw"]);
             $value = $ClientVariables["tables"][$subkey] ?? null;
         } else {
@@ -6238,7 +6358,7 @@ function &LoginStatus($name = "", $value = null)
 // Is auto login (login with option "Auto login until I logout explicitly")
 function IsAutoLogin()
 {
-    return (@$_SESSION[SESSION_USER_LOGIN_TYPE] == "a");
+    return (Session(SESSION_USER_LOGIN_TYPE) == "a");
 }
 
 // Get current page heading
@@ -6281,6 +6401,9 @@ function SetupLoginStatus()
     $loginUrl = "";
     if ($currentPage != $loginPage) {
         $loginUrl = "window.location='" . GetUrl($loginPage) . "';return false;";
+        if (Config("USE_MODAL_LOGIN") && !IsMobile()) {
+            $loginUrl = "return ew.modalDialogShow({lnk:this,btn:'Login',caption:ew.language.phrase('Login'),size:'',url:'" . HtmlEncode(GetUrl($loginPage)) . "'});";
+        }
     }
     $LoginStatus["loginUrl"] = $loginUrl;
     $LoginStatus["loginText"] = $Language->phrase("Login");
@@ -6315,7 +6438,7 @@ function Captcha()
 /**
  * Get DB helper (for backward compatibility only)
  *
- * @param integer|string $dbid - DB ID
+ * @param int|string $dbid - DB ID
  * @return DbHelper
  */
 function &DbHelper($dbid = 0)
@@ -6459,7 +6582,7 @@ function ConvertDisplayValue($t, $val)
  *
  * @param mixed $v Field value
  * @param string $t Date type
- * @param integer $fmt Date format
+ * @param int $fmt Date format
  * @return string Display value of the field value
  */
 function GetDropDownDisplayValue($v, $t = "", $fmt = 0)
@@ -6825,10 +6948,10 @@ function CrosstabFieldExpression($smrytype, $smryfld, $colfld, $datetype, $val, 
  * m: DECODE(TO_CHAR(FieldName,'MM'),LPAD('1',2,'0'),1,0)
  *
  * @param DbField $fld Field
- * @param integer $dateType Date type
+ * @param int $dateType Date type
  * @param mixed $val Value
  * @param string $qc Quote character
- * @param integer $dbid Database ID
+ * @param int $dbid Database ID
  * @return string
  */
 function SqlDistinctFactor($fld, $dateType, $val, $qc, $dbid = 0)
@@ -6977,10 +7100,10 @@ function MatchedFilterValue($ar, $value)
 /**
  * Render repeat column table
  *
- * @param integer $totcnt Total count
- * @param integer $rowcnt Zero based row count
- * @param integer $repeatcnt Repeat count
- * @param integer $rendertype Render type (1 or 2)
+ * @param int $totcnt Total count
+ * @param int $rowcnt Zero based row count
+ * @param int $repeatcnt Repeat count
+ * @param int $rendertype Render type (1 or 2)
  * @return string HTML
  */
 function RepeatColumnTable($totcnt, $rowcnt, $repeatcnt, $rendertype)

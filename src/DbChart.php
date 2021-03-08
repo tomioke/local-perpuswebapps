@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Chart class
@@ -144,12 +144,12 @@ class DbChart
     // Sort
     public function getSort()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->Table->TableVar . "_" . Config("TABLE_SORTCHART") . "_" . $this->ChartVar];
+        return Session(PROJECT_NAME . "_" . $this->Table->TableVar . "_" . Config("TABLE_SORTCHART") . "_" . $this->ChartVar);
     }
 
     public function setSort($v)
     {
-        if (@$_SESSION[PROJECT_NAME . "_" . $this->Table->TableVar . "_" . Config("TABLE_SORTCHART") . "_" . $this->ChartVar] != $v) {
+        if (Session(PROJECT_NAME . "_" . $this->Table->TableVar . "_" . Config("TABLE_SORTCHART") . "_" . $this->ChartVar) != $v) {
             $_SESSION[PROJECT_NAME . "_" . $this->Table->TableVar . "_" . Config("TABLE_SORTCHART") . "_" . $this->ChartVar] = $v;
         }
     }
@@ -162,7 +162,7 @@ class DbChart
      */
     public function getParameters($key)
     {
-        return $this->Parameters->get($key) ?: [];
+        return $this->Parameters->has($key) ? $this->Parameters->get($key) : [];
     }
 
     /**
@@ -202,7 +202,7 @@ class DbChart
     // Load chart parameter
     public function loadParameter($key)
     {
-        return $this->Parameters->get($key);
+        return $this->Parameters->has($key) ? $this->Parameters->get($key) : null;
     }
 
     // Save chart parameter

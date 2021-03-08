@@ -1,12 +1,11 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PengembalianAdd = &$Page;
 ?>
 <script>
-if (!ew.vars.tables.pengembalian) ew.vars.tables.pengembalian = <?= JsonEncode(GetClientVar("tables", "pengembalian")) ?>;
 var currentForm, currentPageID;
 var fpengembalianadd;
 loadjs.ready("head", function () {
@@ -16,11 +15,14 @@ loadjs.ready("head", function () {
     fpengembalianadd = currentForm = new ew.Form("fpengembalianadd", "add");
 
     // Add fields
-    var fields = ew.vars.tables.pengembalian.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "pengembalian")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.pengembalian)
+        ew.vars.tables.pengembalian = currentTable;
     fpengembalianadd.addFields([
-        ["id_peminjaman", [fields.id_peminjaman.required ? ew.Validators.required(fields.id_peminjaman.caption) : null], fields.id_peminjaman.isInvalid],
-        ["tgl_kembali", [fields.tgl_kembali.required ? ew.Validators.required(fields.tgl_kembali.caption) : null, ew.Validators.datetime(0)], fields.tgl_kembali.isInvalid],
-        ["kondisi_buku_kembali", [fields.kondisi_buku_kembali.required ? ew.Validators.required(fields.kondisi_buku_kembali.caption) : null], fields.kondisi_buku_kembali.isInvalid]
+        ["id_peminjaman", [fields.id_peminjaman.visible && fields.id_peminjaman.required ? ew.Validators.required(fields.id_peminjaman.caption) : null], fields.id_peminjaman.isInvalid],
+        ["tgl_kembali", [fields.tgl_kembali.visible && fields.tgl_kembali.required ? ew.Validators.required(fields.tgl_kembali.caption) : null, ew.Validators.datetime(0)], fields.tgl_kembali.isInvalid],
+        ["kondisi_buku_kembali", [fields.kondisi_buku_kembali.visible && fields.kondisi_buku_kembali.required ? ew.Validators.required(fields.kondisi_buku_kembali.caption) : null], fields.kondisi_buku_kembali.isInvalid]
     ]);
 
     // Set invalid fields

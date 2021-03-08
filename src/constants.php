@@ -4,7 +4,7 @@
  * PHPMaker 2021 constants
  */
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Constants
@@ -83,8 +83,8 @@ define(PROJECT_NAMESPACE . "ALLOW_ALL", 511); // All (1 + 2 + 4 + 8 + 16 + 32 + 
 define(PROJECT_NAMESPACE . "PRODUCT_VERSION", "17.0.9");
 
 // Project
-define(PROJECT_NAMESPACE . "PROJECT_NAME", "perpus"); // Project name
-define(PROJECT_NAMESPACE . "PROJECT_ID", "{69EED69A-4609-4945-8B51-0CAFD5F5996C}"); // Project ID
+define(PROJECT_NAMESPACE . "PROJECT_NAME", "perpusupdate"); // Project name
+define(PROJECT_NAMESPACE . "PROJECT_ID", "{E9A867BB-2A2C-4629-AFCE-088C627AB559}"); // Project ID
 
 /**
  * Character encoding

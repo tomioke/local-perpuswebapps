@@ -2,37 +2,37 @@
 /**
  * PHPMaker 2021 user level settings
  */
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // User level info
 $USER_LEVELS = [["-2","Anonymous"],
     ["0","Default"]];
 // User level priv info
-$USER_LEVEL_PRIVS = [["{69EED69A-4609-4945-8B51-0CAFD5F5996C}anggota","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}anggota","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}buku","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}buku","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}peminjaman","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}peminjaman","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}penerbit","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}penerbit","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}pengarang","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}pengarang","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}pengembalian","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}pengembalian","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}data-pengemalian-buku","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}data-pengemalian-buku","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}level","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}level","0","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}permission","-2","0"],
-    ["{69EED69A-4609-4945-8B51-0CAFD5F5996C}permission","0","0"]];
+$USER_LEVEL_PRIVS = [["{E9A867BB-2A2C-4629-AFCE-088C627AB559}anggota","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}anggota","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}buku","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}buku","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}peminjaman","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}peminjaman","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}penerbit","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}penerbit","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}pengarang","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}pengarang","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}pengembalian","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}pengembalian","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}data-pengemalian-buku","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}data-pengemalian-buku","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}level","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}level","0","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}permission","-2","0"],
+    ["{E9A867BB-2A2C-4629-AFCE-088C627AB559}permission","0","0"]];
 // User level table info
-$USER_LEVEL_TABLES = [["anggota","anggota","Data Anggota",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["buku","buku","Data Buku",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["peminjaman","peminjaman","Data Peminjaman",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["penerbit","penerbit","Data Penerbit",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["pengarang","pengarang","Data Pengarang",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["pengembalian","pengembalian","Data Pengembalian",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["data-pengemalian-buku","datapengemalianbuku","Data Pengembalian Buku",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["level","level","Level",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"],
-    ["permission","permission2","Permission",true,"{69EED69A-4609-4945-8B51-0CAFD5F5996C}"]];
+$USER_LEVEL_TABLES = [["anggota","anggota","Data Anggota",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","AnggotaList"],
+    ["buku","buku","Data Buku",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","BukuList"],
+    ["peminjaman","peminjaman","Data Peminjaman",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","PeminjamanList"],
+    ["penerbit","penerbit","Data Penerbit",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","PenerbitList"],
+    ["pengarang","pengarang","Data Pengarang",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","PengarangList"],
+    ["pengembalian","pengembalian","Data Pengembalian",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","PengembalianList"],
+    ["data-pengemalian-buku","datapengemalianbuku","Data Pengembalian Buku",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","DatapengemalianbukuList"],
+    ["level","level","Level",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","LevelList"],
+    ["permission","permission2","Permission",true,"{E9A867BB-2A2C-4629-AFCE-088C627AB559}","Permission2List"]];

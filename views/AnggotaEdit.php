@@ -1,12 +1,11 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $AnggotaEdit = &$Page;
 ?>
 <script>
-if (!ew.vars.tables.anggota) ew.vars.tables.anggota = <?= JsonEncode(GetClientVar("tables", "anggota")) ?>;
 var currentForm, currentPageID;
 var fanggotaedit;
 loadjs.ready("head", function () {
@@ -16,18 +15,21 @@ loadjs.ready("head", function () {
     fanggotaedit = currentForm = new ew.Form("fanggotaedit", "edit");
 
     // Add fields
-    var fields = ew.vars.tables.anggota.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "anggota")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.anggota)
+        ew.vars.tables.anggota = currentTable;
     fanggotaedit.addFields([
-        ["id_anggota", [fields.id_anggota.required ? ew.Validators.required(fields.id_anggota.caption) : null], fields.id_anggota.isInvalid],
-        ["nama_anggota", [fields.nama_anggota.required ? ew.Validators.required(fields.nama_anggota.caption) : null], fields.nama_anggota.isInvalid],
-        ["alamat", [fields.alamat.required ? ew.Validators.required(fields.alamat.caption) : null], fields.alamat.isInvalid],
-        ["tgl_lahir", [fields.tgl_lahir.required ? ew.Validators.required(fields.tgl_lahir.caption) : null, ew.Validators.datetime(0)], fields.tgl_lahir.isInvalid],
-        ["tmp_lahir", [fields.tmp_lahir.required ? ew.Validators.required(fields.tmp_lahir.caption) : null], fields.tmp_lahir.isInvalid],
-        ["_username", [fields._username.required ? ew.Validators.required(fields._username.caption) : null], fields._username.isInvalid],
-        ["_password", [fields._password.required ? ew.Validators.required(fields._password.caption) : null], fields._password.isInvalid],
-        ["id_level", [fields.id_level.required ? ew.Validators.required(fields.id_level.caption) : null], fields.id_level.isInvalid],
-        ["no_handphone", [fields.no_handphone.required ? ew.Validators.required(fields.no_handphone.caption) : null], fields.no_handphone.isInvalid],
-        ["_email", [fields._email.required ? ew.Validators.required(fields._email.caption) : null, ew.Validators.email], fields._email.isInvalid]
+        ["id_anggota", [fields.id_anggota.visible && fields.id_anggota.required ? ew.Validators.required(fields.id_anggota.caption) : null], fields.id_anggota.isInvalid],
+        ["nama_anggota", [fields.nama_anggota.visible && fields.nama_anggota.required ? ew.Validators.required(fields.nama_anggota.caption) : null], fields.nama_anggota.isInvalid],
+        ["alamat", [fields.alamat.visible && fields.alamat.required ? ew.Validators.required(fields.alamat.caption) : null], fields.alamat.isInvalid],
+        ["tgl_lahir", [fields.tgl_lahir.visible && fields.tgl_lahir.required ? ew.Validators.required(fields.tgl_lahir.caption) : null, ew.Validators.datetime(0)], fields.tgl_lahir.isInvalid],
+        ["tmp_lahir", [fields.tmp_lahir.visible && fields.tmp_lahir.required ? ew.Validators.required(fields.tmp_lahir.caption) : null], fields.tmp_lahir.isInvalid],
+        ["_username", [fields._username.visible && fields._username.required ? ew.Validators.required(fields._username.caption) : null], fields._username.isInvalid],
+        ["_password", [fields._password.visible && fields._password.required ? ew.Validators.required(fields._password.caption) : null], fields._password.isInvalid],
+        ["id_level", [fields.id_level.visible && fields.id_level.required ? ew.Validators.required(fields.id_level.caption) : null], fields.id_level.isInvalid],
+        ["no_handphone", [fields.no_handphone.visible && fields.no_handphone.required ? ew.Validators.required(fields.no_handphone.caption) : null], fields.no_handphone.isInvalid],
+        ["_email", [fields._email.visible && fields._email.required ? ew.Validators.required(fields._email.caption) : null, ew.Validators.email], fields._email.isInvalid]
     ]);
 
     // Set invalid fields

@@ -1,7 +1,7 @@
-<?php namespace PHPMaker2021\perpus; ?>
+<?php namespace PHPMaker2021\perpusupdate; ?>
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $Login = &$Page;

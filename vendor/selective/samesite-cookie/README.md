@@ -1,17 +1,18 @@
 # selective/samesite-cookie
 
-Secure your site with SameSite cookies :cookie:
+A PSR-15 middleware to secure your site with SameSite cookies :cookie:
 
-[![Latest Version on Packagist](https://img.shields.io/github/release/selective-php/samesite-cookie.svg?style=flat-square)](https://packagist.org/packages/selective/samesite-cookie)
-[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Build Status](https://img.shields.io/travis/selective-php/samesite-cookie/master.svg?style=flat-square)](https://travis-ci.org/selective-php/samesite-cookie)
-[![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/selective-php/samesite-cookie.svg?style=flat-square)](https://scrutinizer-ci.com/g/selective-php/samesite-cookie/code-structure)
-[![Quality Score](https://img.shields.io/scrutinizer/quality/g/selective-php/samesite-cookie.svg?style=flat-square)](https://scrutinizer-ci.com/g/selective-php/samesite-cookie/?branch=master)
-[![Total Downloads](https://img.shields.io/packagist/dt/selective/samesite-cookie.svg?style=flat-square)](https://packagist.org/packages/selective/samesite-cookie/stats)
+[![Latest Version on Packagist](https://img.shields.io/github/release/selective-php/samesite-cookie.svg)](https://packagist.org/packages/selective/samesite-cookie)
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![Build Status](https://github.com/selective-php/samesite-cookie/workflows/build/badge.svg)](https://github.com/selective-php/samesite-cookie/actions)
+[![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/selective-php/samesite-cookie.svg)](https://scrutinizer-ci.com/g/selective-php/samesite-cookie/code-structure)
+[![Quality Score](https://img.shields.io/scrutinizer/quality/g/selective-php/samesite-cookie.svg)](https://scrutinizer-ci.com/g/selective-php/samesite-cookie/?branch=master)
+[![Total Downloads](https://img.shields.io/packagist/dt/selective/samesite-cookie.svg)](https://packagist.org/packages/selective/samesite-cookie/stats)
+
 
 ## Requirements
 
-* PHP 7.1+
+* PHP 7.2+ or 8.0+
 
 ## Installation
 
@@ -20,6 +21,8 @@ composer require selective/samesite-cookie
 ```
 
 ## SameSite cookies
+
+![image](https://user-images.githubusercontent.com/781074/64995066-95404c80-d8da-11e9-975f-bdbbf55bd311.png)
 
 Same-site cookies ("First-Party-Only" or "First-Party") allow servers to mitigate 
 the risk of CSRF and information leakage attacks by asserting that a particular 
@@ -39,6 +42,26 @@ Further details can be found here:
 
 ## Slim 4 integration
 
+```php
+<?php
+
+use Selective\SameSiteCookie\SameSiteCookieMiddleware;
+use Slim\Factory\AppFactory;
+
+$app = AppFactory::create();
+
+// ...
+
+// Register the samesite cookie middleware
+$app->add(new SameSiteCookieMiddleware());
+
+// ...
+
+$app->run();
+```
+
+**Example with configuration and the session starter middleware.**
+
 Slim 4 uses a LIFO (last in, first out) middleware stack,
 so we have to add the middleware in reverse order:
 
@@ -54,13 +77,15 @@ $app = AppFactory::create();
 
 // ...
 
+// Optional: Add custom configuration
 $configuration = new SameSiteCookieConfiguration();
 
 // Register the samesite cookie middleware
 $app->add(new SameSiteCookieMiddleware($configuration));
 
-// Start the native PHP session handler and fetch the session attributes
-$app->add(new SameSiteSessionMiddleware($configuration));
+// Optional: Start the PHP session
+// Use this middleware only if you have no other session starter middleware
+$app->add(new SameSiteSessionMiddleware());
 
 // ...
 

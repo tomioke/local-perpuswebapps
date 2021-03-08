@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -59,11 +59,14 @@ class ControllerBase
 
                 // Render view with $GLOBALS
                 $page->RenderingView = true;
-                $response = $view->render($response, $template, $GLOBALS);
+                $responseView = $view->render($response, $template, $GLOBALS);
                 $page->RenderingView = false;
 
                 // Terminate page and clean up
-                $page->terminate();
+                if (!$page->isTerminated()) {
+                    $response = $responseView;
+                    $page->terminate();
+                }
             }
             return $response;
         }

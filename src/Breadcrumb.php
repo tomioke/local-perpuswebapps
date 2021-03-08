@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Breadcrumb class
@@ -44,8 +44,8 @@ class Breadcrumb
         $mastertable = [];
         if ($table != "") {
             $tablevar = $table;
-            while (@$_SESSION[PROJECT_NAME . "_" . $tablevar . "_" . Config("TABLE_MASTER_TABLE")] != "") {
-                $tablevar = $_SESSION[PROJECT_NAME . "_" . $tablevar . "_" . Config("TABLE_MASTER_TABLE")];
+            while (Session(PROJECT_NAME . "_" . $tablevar . "_" . Config("TABLE_MASTER_TABLE")) != "") {
+                $tablevar = Session(PROJECT_NAME . "_" . $tablevar . "_" . Config("TABLE_MASTER_TABLE"));
                 if (in_array($tablevar, $mastertable)) {
                     break;
                 }
@@ -88,8 +88,9 @@ class Breadcrumb
     // Load links from Session
     protected function loadSession()
     {
-        if (is_array(@$_SESSION[SESSION_BREADCRUMB])) {
-            $this->SessionLinks = $_SESSION[SESSION_BREADCRUMB];
+        $links = Session(SESSION_BREADCRUMB);
+        if (is_array($links)) {
+            $this->SessionLinks = $links;
         }
     }
 

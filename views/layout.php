@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Base path
 $basePath = BasePath(true);
@@ -11,21 +11,21 @@ $basePath = BasePath(true);
 <title><?= $Language->projectPhrase("BodyTitle") ?></title>
 <meta charset="utf-8">
 <?php if ($ReportExportType != "" && $ReportExportType != "print") { // Stylesheet for exporting reports ?>
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?><?= CssFile(Config("PROJECT_STYLESHEET_FILENAME")) ?>">
+<link rel="stylesheet" href="<?= $basePath ?><?= CssFile(Config("PROJECT_STYLESHEET_FILENAME")) ?>">
     <?php if ($ReportExportType == "pdf" && Config("PDF_STYLESHEET_FILENAME")) { ?>
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?><?= CssFile(Config("PDF_STYLESHEET_FILENAME")) ?>">
-<?php } ?>
+<link rel="stylesheet" href="<?= "/" . $basePath ?><?= CssFile(Config("PDF_STYLESHEET_FILENAME")) ?>">
+    <?php } ?>
 <?php } ?>
 <?php if (!IsExport() || IsExport("print")) { ?>
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?>plugins/select2/css/select2.min.css">
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?>plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css">
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?>adminlte3/css/<?= CssFile("adminlte.css") ?>">
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?>plugins/fontawesome-free/css/all.min.css">
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?>css/OverlayScrollbars.min.css">
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?><?= CssFile(Config("PROJECT_STYLESHEET_FILENAME")) ?>">
+<link rel="stylesheet" href="<?= $basePath ?>plugins/select2/css/select2.min.css">
+<link rel="stylesheet" href="<?= $basePath ?>plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css">
+<link rel="stylesheet" href="<?= $basePath ?>adminlte3/css/<?= CssFile("adminlte.css") ?>">
+<link rel="stylesheet" href="<?= $basePath ?>plugins/fontawesome-free/css/all.min.css">
+<link rel="stylesheet" href="<?= $basePath ?>css/OverlayScrollbars.min.css">
+<link rel="stylesheet" href="<?= $basePath ?><?= CssFile(Config("PROJECT_STYLESHEET_FILENAME")) ?>">
 <?php if ($CustomExportType == "pdf" && Config("PDF_STYLESHEET_FILENAME")) { ?>
-<link rel="stylesheet" type="text/css" href="<?= $basePath ?><?= CssFile(Config("PDF_STYLESHEET_FILENAME")) ?>">
+<link rel="stylesheet" href="<?= $basePath ?><?= CssFile(Config("PDF_STYLESHEET_FILENAME")) ?>">
 <?php } ?>
 <script src="<?= $basePath ?>js/ewcore.min.js"></script>
 <script>
@@ -69,8 +69,7 @@ Object.assign(ew, {
     API_PROGRESS_ACTION: "<?= Config("API_PROGRESS_ACTION") ?>", // API progress action
     API_EXPORT_CHART_ACTION: "<?= Config("API_EXPORT_CHART_ACTION") ?>", // API export chart action
     API_JWT_AUTHORIZATION_HEADER: "X-Authorization", // API JWT authorization header
-    API_JWT_TOKEN: "", // API JWT token
-    USE_URL_REWRITE: <?= Config("USE_URL_REWRITE") ? "true" : "false" ?>, // URL rewrite
+    API_JWT_TOKEN: "<?= GetJwtToken() ?>", // API JWT token
     MULTIPLE_OPTION_SEPARATOR: "<?= Config("MULTIPLE_OPTION_SEPARATOR") ?>", // Multiple option separator
     AUTO_SUGGEST_MAX_ENTRIES: <?= Config("AUTO_SUGGEST_MAX_ENTRIES") ?>, // Auto-Suggest max entries
     IMAGE_FOLDER: "images/", // Image folder
@@ -82,7 +81,7 @@ Object.assign(ew, {
     IMPORT_FILE_ALLOWED_EXT: "<?= Config("IMPORT_FILE_ALLOWED_EXT") ?>", // Import file allowed extensions
     USE_COLORBOX: <?= Config("USE_COLORBOX") ? "true" : "false" ?>,
     USE_JAVASCRIPT_MESSAGE: true,
-    PROJECT_STYLESHEET_FILENAME: "<?= HtmlEncode(GetUrl(Config("PROJECT_STYLESHEET_FILENAME"))) ?>", // Project style sheet
+    PROJECT_STYLESHEET_FILENAME: "<?= GetUrl(Config("PROJECT_STYLESHEET_FILENAME")) ?>", // Project style sheet
     PDF_STYLESHEET_FILENAME: "<?= Config("PDF_STYLESHEET_FILENAME") ?: "" ?>", // PDF style sheet // PHP
     EMBED_PDF: <?= Config("EMBED_PDF") ? "true" : "false" ?>,
     ANTIFORGERY_TOKEN_KEY: "<?= $TokenValueKey ?>", // PHP
@@ -114,7 +113,7 @@ loadjs([
 ], "swal");
 <?= $Language->toJson() ?>
 ew.vars = <?= JsonEncode($ClientVariables) ?>;
-ew.ready("jquery", ew.PATH_BASE + "jquery/jsrender.min.js", "jsrender", ew.renderJsTemplates);
+ew.ready(["wrapper", "jquery"], ew.PATH_BASE + "jquery/jsrender.min.js", "jsrender", ew.renderJsTemplates);
 ew.ready("jsrender", ew.PATH_BASE + "jquery/jquery.overlayScrollbars.min.js", "scrollbars"); // Init sidebar scrollbars after rendering menu
 ew.ready("jquery", ew.PATH_BASE + "jquery/jquery.ui.widget.min.js", "widget");
 ew.loadjs([
@@ -369,6 +368,9 @@ if (isset($DebugTimer)) {
 </div>
 <!-- ./wrapper -->
 <?php } ?>
+<script>
+loadjs.done("wrapper");
+</script>
 <!-- template upload (for file upload) -->
 <script id="template-upload" type="text/html">
 {{for files}}
@@ -459,6 +461,11 @@ if (isset($DebugTimer)) {
 <div id="ew-tooltip"></div>
 <!-- drill down -->
 <div id="ew-drilldown-panel"></div>
+<?php } ?>
+<?php if (IsExport("print")) { ?>
+<script>
+loadjs.done("wrapper");
+</script>
 <?php } ?>
 <script>
 loadjs.ready(ew.bundleIds, function() {

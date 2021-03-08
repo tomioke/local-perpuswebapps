@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Slim\Views\PhpRenderer;
 use Slim\Csrf\Guard;
@@ -22,12 +22,13 @@ return [
     },
     "audit" => function (ContainerInterface $c) {
         $logger = new Logger("audit"); // For audit trail
-        $logger->pushHandler(new AuditTrailHandler("audit.log"));
+        $logger->pushHandler(new AuditTrailHandler("log/audit.log"));
         return $logger;
     },
     "log" => function (ContainerInterface $c) {
+        global $RELATIVE_PATH;
         $logger = new Logger("log");
-        $logger->pushHandler(new RotatingFileHandler("log.log"));
+        $logger->pushHandler(new RotatingFileHandler($RELATIVE_PATH . "log/log.log"));
         return $logger;
     },
     "sqllogger" => function (ContainerInterface $c) {
@@ -35,6 +36,7 @@ return [
         if (Config("DEBUG")) {
             $loggers[] = $c->get("debugstack");
         }
+        $loggers[] = $c->get("debugsqllogger");
         return (count($loggers) > 0) ? new LoggerChain($loggers) : null;
     },
     "csrf" => function (ContainerInterface $c) {
@@ -47,6 +49,7 @@ return [
     "profile" => \DI\create(UserProfile::class),
     "language" => \DI\create(Language::class),
     "timer" => \DI\create(Timer::class),
+    "session" => \DI\create(HttpSession::class),
 
     // Tables
     "anggota" => \DI\create(Anggota::class),
@@ -61,7 +64,4 @@ return [
 
     // User table
     "usertable" => \DI\get("anggota"),
-
-    // Detail table pages
-    "BukuGrid" => \DI\create(BukuGrid::class),
 ];

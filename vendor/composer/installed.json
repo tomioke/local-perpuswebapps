@@ -227,30 +227,34 @@
         },
         {
             "name": "dflydev/dot-access-data",
-            "version": "v2.0.0",
-            "version_normalized": "2.0.0.0",
+            "version": "v3.0.0",
+            "version_normalized": "3.0.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dflydev/dflydev-dot-access-data.git",
-                "reference": "70a44e8a46c7943118cbbf741ef3411d84e38c81"
+                "reference": "e04ff030d24a33edc2421bef305e32919dd78fc3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dflydev/dflydev-dot-access-data/zipball/70a44e8a46c7943118cbbf741ef3411d84e38c81",
-                "reference": "70a44e8a46c7943118cbbf741ef3411d84e38c81",
+                "url": "https://api.github.com/repos/dflydev/dflydev-dot-access-data/zipball/e04ff030d24a33edc2421bef305e32919dd78fc3",
+                "reference": "e04ff030d24a33edc2421bef305e32919dd78fc3",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.0"
+                "php": "^7.1 || ^8.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^6.0"
+                "phpstan/phpstan": "^0.12.42",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.3",
+                "scrutinizer/ocular": "1.6.0",
+                "squizlabs/php_codesniffer": "^3.5",
+                "vimeo/psalm": "^3.14"
             },
-            "time": "2017-12-21T14:08:21+00:00",
+            "time": "2021-01-01T22:08:42+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0-dev"
+                    "dev-main": "3.x-dev"
                 }
             },
             "installation-source": "dist",
@@ -278,6 +282,11 @@
                     "name": "Carlos Frutos",
                     "email": "carlos@kiwing.it",
                     "homepage": "https://github.com/cfrutos"
+                },
+                {
+                    "name": "Colin O'Dell",
+                    "email": "colinodell@gmail.com",
+                    "homepage": "https://www.colinodell.com"
                 }
             ],
             "description": "Given a deep data structure, access data by dot notation.",
@@ -290,7 +299,7 @@
             ],
             "support": {
                 "issues": "https://github.com/dflydev/dflydev-dot-access-data/issues",
-                "source": "https://github.com/dflydev/dflydev-dot-access-data/tree/master"
+                "source": "https://github.com/dflydev/dflydev-dot-access-data/tree/v3.0.0"
             },
             "install-path": "../dflydev/dot-access-data"
         },
@@ -724,36 +733,38 @@
         },
         {
             "name": "hkvstore/dompdf",
-            "version": "0.8.502",
-            "version_normalized": "0.8.502.0",
+            "version": "1.0.200",
+            "version_normalized": "1.0.200.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hkvstore/dompdf.git",
-                "reference": "627b5ffc61835872c167cf612518770e0eea0747"
+                "reference": "d77a64b3df0e5f5ca0d396ba89ad151817b8b7be"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hkvstore/dompdf/zipball/627b5ffc61835872c167cf612518770e0eea0747",
-                "reference": "627b5ffc61835872c167cf612518770e0eea0747",
+                "url": "https://api.github.com/repos/hkvstore/dompdf/zipball/d77a64b3df0e5f5ca0d396ba89ad151817b8b7be",
+                "reference": "d77a64b3df0e5f5ca0d396ba89ad151817b8b7be",
                 "shasum": ""
             },
             "require": {
                 "ext-dom": "*",
                 "ext-mbstring": "*",
-                "phenx/php-font-lib": "^0.5.1",
+                "phenx/php-font-lib": "^0.5.2",
                 "phenx/php-svg-lib": "^0.3.3",
-                "php": "^7.2|^8.0"
+                "php": "^7.2 || ^8.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^7.5",
+                "mockery/mockery": "^1.3",
+                "phpunit/phpunit": "^7.5 || ^8 || ^9",
                 "squizlabs/php_codesniffer": "^3.5"
             },
             "suggest": {
                 "ext-gd": "Needed to process images",
                 "ext-gmagick": "Improves image processing performance",
-                "ext-imagick": "Improves image processing performance"
+                "ext-imagick": "Improves image processing performance",
+                "ext-zlib": "Needed for pdf stream compression"
             },
-            "time": "2021-01-06T10:26:36+00:00",
+            "time": "2021-01-11T08:47:07+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -791,7 +802,7 @@
             "homepage": "https://github.com/dompdf/dompdf",
             "support": {
                 "issues": "https://github.com/hkvstore/dompdf/issues",
-                "source": "https://github.com/hkvstore/dompdf/tree/0.8.502"
+                "source": "https://github.com/hkvstore/dompdf/tree/1.0.200"
             },
             "install-path": "../hkvstore/dompdf"
         },
@@ -2669,39 +2680,40 @@
         },
         {
             "name": "selective/samesite-cookie",
-            "version": "0.1.0",
-            "version_normalized": "0.1.0.0",
+            "version": "0.3.0",
+            "version_normalized": "0.3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/selective-php/samesite-cookie.git",
-                "reference": "005c653c70b8b728750977266a89691e307f13ef"
+                "reference": "805d82de34cb642189932feb17158da98078f9a6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/selective-php/samesite-cookie/zipball/005c653c70b8b728750977266a89691e307f13ef",
-                "reference": "005c653c70b8b728750977266a89691e307f13ef",
+                "url": "https://api.github.com/repos/selective-php/samesite-cookie/zipball/805d82de34cb642189932feb17158da98078f9a6",
+                "reference": "805d82de34cb642189932feb17158da98078f9a6",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1",
-                "psr/http-message": "^1.0",
-                "psr/http-server-handler": "^1.0",
-                "psr/http-server-middleware": "^1.0"
+                "php": "^7.2 || ^8.0",
+                "psr/http-message": "^1",
+                "psr/http-server-handler": "^1",
+                "psr/http-server-middleware": "^1"
             },
             "require-dev": {
-                "nyholm/psr7": "^1.1",
-                "overtrue/phplint": "^1.1",
-                "phpstan/phpstan-shim": "^0.11",
-                "phpunit/phpunit": "^7",
-                "relay/relay": "^2.0",
-                "squizlabs/php_codesniffer": "^3.4"
+                "friendsofphp/php-cs-fixer": "^2",
+                "middlewares/utils": "^3",
+                "overtrue/phplint": "^2",
+                "phpstan/phpstan": "0.*",
+                "phpunit/phpunit": "^8 || ^9",
+                "slim/psr7": "^1",
+                "squizlabs/php_codesniffer": "^3"
             },
-            "time": "2019-09-16T21:22:26+00:00",
+            "time": "2021-01-11T07:49:32+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
                 "psr-4": {
-                    "Selective\\SameSiteCookie\\": "src"
+                    "Selective\\SameSiteCookie\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -2718,7 +2730,7 @@
             ],
             "support": {
                 "issues": "https://github.com/selective-php/samesite-cookie/issues",
-                "source": "https://github.com/selective-php/samesite-cookie/tree/0.1.0"
+                "source": "https://github.com/selective-php/samesite-cookie/tree/0.3.0"
             },
             "install-path": "../selective/samesite-cookie"
         },

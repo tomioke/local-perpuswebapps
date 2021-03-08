@@ -1,12 +1,11 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PengarangAdd = &$Page;
 ?>
 <script>
-if (!ew.vars.tables.pengarang) ew.vars.tables.pengarang = <?= JsonEncode(GetClientVar("tables", "pengarang")) ?>;
 var currentForm, currentPageID;
 var fpengarangadd;
 loadjs.ready("head", function () {
@@ -16,9 +15,12 @@ loadjs.ready("head", function () {
     fpengarangadd = currentForm = new ew.Form("fpengarangadd", "add");
 
     // Add fields
-    var fields = ew.vars.tables.pengarang.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "pengarang")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.pengarang)
+        ew.vars.tables.pengarang = currentTable;
     fpengarangadd.addFields([
-        ["nama_pengarang", [fields.nama_pengarang.required ? ew.Validators.required(fields.nama_pengarang.caption) : null], fields.nama_pengarang.isInvalid]
+        ["nama_pengarang", [fields.nama_pengarang.visible && fields.nama_pengarang.required ? ew.Validators.required(fields.nama_pengarang.caption) : null], fields.nama_pengarang.isInvalid]
     ]);
 
     // Set invalid fields

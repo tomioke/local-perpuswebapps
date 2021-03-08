@@ -1,12 +1,11 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PengarangEdit = &$Page;
 ?>
 <script>
-if (!ew.vars.tables.pengarang) ew.vars.tables.pengarang = <?= JsonEncode(GetClientVar("tables", "pengarang")) ?>;
 var currentForm, currentPageID;
 var fpengarangedit;
 loadjs.ready("head", function () {
@@ -16,10 +15,13 @@ loadjs.ready("head", function () {
     fpengarangedit = currentForm = new ew.Form("fpengarangedit", "edit");
 
     // Add fields
-    var fields = ew.vars.tables.pengarang.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "pengarang")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.pengarang)
+        ew.vars.tables.pengarang = currentTable;
     fpengarangedit.addFields([
-        ["id_pengarang", [fields.id_pengarang.required ? ew.Validators.required(fields.id_pengarang.caption) : null], fields.id_pengarang.isInvalid],
-        ["nama_pengarang", [fields.nama_pengarang.required ? ew.Validators.required(fields.nama_pengarang.caption) : null], fields.nama_pengarang.isInvalid]
+        ["id_pengarang", [fields.id_pengarang.visible && fields.id_pengarang.required ? ew.Validators.required(fields.id_pengarang.caption) : null], fields.id_pengarang.isInvalid],
+        ["nama_pengarang", [fields.nama_pengarang.visible && fields.nama_pengarang.required ? ew.Validators.required(fields.nama_pengarang.caption) : null], fields.nama_pengarang.isInvalid]
     ]);
 
     // Set invalid fields

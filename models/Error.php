@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -102,7 +102,6 @@ class Error
 
         // Initialize
         $GLOBALS["Page"] = &$this;
-        $this->TokenTimeout = SessionTimeoutTime();
 
         // Language object
         $Language = Container("language");
@@ -125,6 +124,30 @@ class Error
     {
         global $Response;
         return is_object($Response) ? $Response->getBody() : ob_get_clean();
+    }
+
+    // Is lookup
+    public function isLookup()
+    {
+        return SameText(Route(0), Config("API_LOOKUP_ACTION"));
+    }
+
+    // Is AutoFill
+    public function isAutoFill()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autofill");
+    }
+
+    // Is AutoSuggest
+    public function isAutoSuggest()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autosuggest");
+    }
+
+    // Is modal lookup
+    public function isModalLookup()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "modal");
     }
 
     // Is terminated

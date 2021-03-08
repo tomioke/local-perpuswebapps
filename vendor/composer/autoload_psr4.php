@@ -26,7 +26,7 @@ return array(
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'PhpOffice\\PhpSpreadsheet\\' => array($vendorDir . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet'),
     'PhpDocReader\\' => array($vendorDir . '/php-di/phpdoc-reader/src/PhpDocReader'),
-    'PHPMaker2021\\perpus\\' => array($baseDir . '/src', $baseDir . '/models', $baseDir . '/controllers'),
+    'PHPMaker2021\\perpusupdate\\' => array($baseDir . '/src', $baseDir . '/models', $baseDir . '/controllers'),
     'PHPMailer\\PHPMailer\\' => array($vendorDir . '/phpmailer/phpmailer/src'),
     'Opis\\Closure\\' => array($vendorDir . '/opis/closure/src'),
     'Nyholm\\Psr7\\' => array($vendorDir . '/nyholm/psr7/src'),

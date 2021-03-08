@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -79,6 +79,7 @@ class Buku extends DbTable
         $this->cover->ImageResize = true;
         $this->cover->UploadAllowedFileExt = "jpg,jpeg,png,bmp,gif";
         $this->cover->UploadMaxFileSize = 999999999;
+        $this->cover->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->cover->Param, "CustomMsg");
         $this->Fields['cover'] = &$this->cover;
 
         // id_buku
@@ -89,6 +90,7 @@ class Buku extends DbTable
         $this->id_buku->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->id_buku->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->id_buku->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_buku->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_buku->Param, "CustomMsg");
         $this->Fields['id_buku'] = &$this->id_buku;
 
         // nama_buku
@@ -96,6 +98,7 @@ class Buku extends DbTable
         $this->nama_buku->Nullable = false; // NOT NULL field
         $this->nama_buku->Required = true; // Required field
         $this->nama_buku->Sortable = true; // Allow sort
+        $this->nama_buku->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->nama_buku->Param, "CustomMsg");
         $this->Fields['nama_buku'] = &$this->nama_buku;
 
         // pengarang
@@ -108,6 +111,7 @@ class Buku extends DbTable
         $this->pengarang->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->pengarang->Lookup = new Lookup('pengarang', 'pengarang', false, 'id_pengarang', ["nama_pengarang","","",""], [], [], [], [], [], [], '', '');
         $this->pengarang->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->pengarang->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->pengarang->Param, "CustomMsg");
         $this->Fields['pengarang'] = &$this->pengarang;
 
         // penerbit
@@ -120,6 +124,7 @@ class Buku extends DbTable
         $this->penerbit->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->penerbit->Lookup = new Lookup('penerbit', 'penerbit', false, 'id_penerbit', ["nama_penerbit","","",""], [], [], [], [], [], [], '', '');
         $this->penerbit->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->penerbit->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->penerbit->Param, "CustomMsg");
         $this->Fields['penerbit'] = &$this->penerbit;
 
         // kode_isbn
@@ -127,6 +132,7 @@ class Buku extends DbTable
         $this->kode_isbn->Nullable = false; // NOT NULL field
         $this->kode_isbn->Required = true; // Required field
         $this->kode_isbn->Sortable = true; // Allow sort
+        $this->kode_isbn->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->kode_isbn->Param, "CustomMsg");
         $this->Fields['kode_isbn'] = &$this->kode_isbn;
 
         // rangkuman
@@ -134,6 +140,7 @@ class Buku extends DbTable
         $this->rangkuman->Nullable = false; // NOT NULL field
         $this->rangkuman->Required = true; // Required field
         $this->rangkuman->Sortable = true; // Allow sort
+        $this->rangkuman->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->rangkuman->Param, "CustomMsg");
         $this->Fields['rangkuman'] = &$this->rangkuman;
     }
 
@@ -224,7 +231,7 @@ class Buku extends DbTable
     // Session ORDER BY for List page
     public function getSessionOrderByList()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY_LIST")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY_LIST"));
     }
 
     public function setSessionOrderByList($v)
@@ -235,7 +242,7 @@ class Buku extends DbTable
     // Current master table name
     public function getCurrentMasterTable()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE"));
     }
 
     public function setCurrentMasterTable($v)
@@ -468,18 +475,21 @@ class Buku extends DbTable
         $cnt = -1;
         $rs = null;
         if ($sql instanceof \Doctrine\DBAL\Query\QueryBuilder) { // Query builder
-            $sql = $sql->resetQueryPart("orderBy")->getSQL();
+            $sqlwrk = clone $sql;
+            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
+        } else {
+            $sqlwrk = $sql;
         }
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
             ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sql) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sql) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sql) && !preg_match('/\s+order\s+by\s+/i', $sql)
+            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sql);
+            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sql . ") COUNT_TABLE";
+            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
         $rs = $conn->executeQuery($sqlwrk);
@@ -820,18 +830,17 @@ class Buku extends DbTable
     // Return page URL
     public function getReturnUrl()
     {
+        $referUrl = ReferUrl();
+        $referPageName = ReferPageName();
         $name = PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL");
         // Get referer URL automatically
-        if (ReferUrl() != "" && ReferPageName() != CurrentPageName() && ReferPageName() != "login") { // Referer not same page or login page
-            $_SESSION[$name] = ReferUrl(); // Save to Session
+        if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
+            $_SESSION[$name] = $referUrl; // Save to Session
         }
-        if (@$_SESSION[$name] != "") {
-            return $_SESSION[$name];
-        } else {
-            return GetUrl("BukuList");
-        }
+        return $_SESSION[$name] ?? GetUrl("BukuList");
     }
 
+    // Set return page URL
     public function setReturnUrl($v)
     {
         $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL")] = $v;
@@ -938,11 +947,11 @@ class Buku extends DbTable
     {
         if ($this->getCurrentMasterTable() == "penerbit" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
             $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
-            $url .= "&" . GetForeignKeyUrl("fk_id_penerbit", $this->penerbit->CurrentValue);
+            $url .= "&" . GetForeignKeyUrl("fk_id_penerbit", $this->penerbit->CurrentValue ?? $this->penerbit->getSessionValue());
         }
         if ($this->getCurrentMasterTable() == "pengarang" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
             $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
-            $url .= "&" . GetForeignKeyUrl("fk_id_pengarang", $this->pengarang->CurrentValue);
+            $url .= "&" . GetForeignKeyUrl("fk_id_pengarang", $this->pengarang->CurrentValue ?? $this->pengarang->getSessionValue());
         }
         return $url;
     }

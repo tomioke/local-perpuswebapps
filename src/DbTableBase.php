@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Table classes
@@ -26,8 +26,10 @@ class DbTableBase
     public $ExportPageBreakCount; // Page break per every n record (PDF only)
     public $ExportPageOrientation; // Page orientation (PDF only)
     public $ExportPageSize; // Page size (PDF only)
-    public $ExportExcelPageOrientation; // Page orientation (PhpSpreadsheet only)
-    public $ExportExcelPageSize; // Page size (PhpSpreadsheet only)
+    public $ExportExcelPageOrientation; // Page orientation (Excel only)
+    public $ExportExcelPageSize; // Page size (Excel only)
+    public $ExportWordPageOrientation; // Page orientation (Word only)
+    public $ExportWordColumnWidth; // Page orientation (Word only)
     public $SendEmail; // Send email
     public $ImportCsvEncoding = ""; // Import to CSV encoding
     public $ImportCsvDelimiter; // Import to CSV delimiter
@@ -47,6 +49,7 @@ class DbTableBase
     public $CurrentAction; // Current action
     public $LastAction; // Last action
     public $UserIDAllowSecurity = 0; // User ID allowed permissions
+    public $Count = 0; // Record count (as detail table)
     public $UpdateTable = ""; // Update Table
     public $Filter = "";
     public $DefaultFilter = "";
@@ -194,7 +197,7 @@ class DbTableBase
     {
         $values = [];
         foreach ($this->Fields as $fldname => $fld) {
-            if (in_array($fld->DataType, Config("CUSTOM_TEMPLATE_DATATYPES"))) {
+            if (in_array($fld->DataType, Config("CUSTOM_TEMPLATE_DATATYPES")) && $fld->Visible) {
                 if (is_string($fld->DbValue) && strlen($fld->DbValue) > Config("DATA_STRING_MAX_LENGTH")) {
                     $values[$fld->Param] = substr($fld->DbValue, 0, Config("DATA_STRING_MAX_LENGTH"));
                 } else {
@@ -315,7 +318,7 @@ class DbTableBase
     /**
      * Set use lookup cache
      *
-     * @param boolean $b Use lookup cache or not
+     * @param bool $b Use lookup cache or not
      * @return void
      */
     public function setUseLookupCache($b)
@@ -328,7 +331,7 @@ class DbTableBase
     /**
      * Set Lookup cache count
      *
-     * @param integer $i Lookup cache count
+     * @param int $i Lookup cache count
      * @return void
      */
     public function setLookupCacheCount($i)
@@ -369,5 +372,28 @@ class DbTableBase
             }
         }
         SetClientVar("tables", [$this->TableVar => $props]);
+    }
+
+    // For obsolete properties only
+    public function __set($name, $value)
+    {
+        if (EndsString("_Count", $name)) { // <DetailTable>_Count
+            $t = preg_replace('/_Count$/', "", $name);
+            throw new \Exception("Obsolete property: " . $name . ", please use Container('" . $t . "')->Count.");
+        } elseif (Config("DEBUG")) {
+            throw new \Exception("Undefined property: " . $name . ".");
+        }
+    }
+
+    // For obsolete properties only
+    public function __get($name)
+    {
+        if (EndsString("_Count", $name)) { // <DetailTable>_Count
+            $t = preg_replace('/_Count$/', "", $name);
+            throw new \Exception("Obsolete property: " . $name . ", please use Container('" . $t . "')->Count.");
+        } elseif (Config("DEBUG")) {
+            throw new \Exception("Undefined property: " . $name . ".");
+        }
+        return null;
     }
 }

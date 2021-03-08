@@ -8,23 +8,23 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * Native PHP Session Middleware.
+ * SameSite Session Middleware.
  */
 final class SameSiteSessionMiddleware implements MiddlewareInterface
 {
     /**
-     * @var bool
+     * @var SessionHandlerInterface
      */
-    private $startSession;
+    private $sessionHandler;
 
     /**
      * The constructor.
      *
-     * @param SameSiteCookieConfiguration $configuration The configuration
+     * @param SessionHandlerInterface|null $sessionHandler The session handler
      */
-    public function __construct(SameSiteCookieConfiguration $configuration)
+    public function __construct(SessionHandlerInterface $sessionHandler = null)
     {
-        $this->startSession = $configuration->startSession;
+        $this->sessionHandler = $sessionHandler ?: new PhpSessionHandler();
     }
 
     /**
@@ -37,16 +37,13 @@ final class SameSiteSessionMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // Start session
-        if ($this->startSession === true && session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+        if (!$this->sessionHandler->isStarted()) {
+            $this->sessionHandler->start();
         }
 
-        $request = $request
-            ->withAttribute('session_id', session_id())
-            ->withAttribute('session_name', session_name())
-            ->withAttribute('session_cookie_params', session_get_cookie_params());
+        $response = $handler->handle($request);
+        $this->sessionHandler->save();
 
-        return $handler->handle($request);
+        return $response;
     }
 }

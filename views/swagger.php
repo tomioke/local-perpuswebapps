@@ -3,7 +3,7 @@ info:
   title: <?= $title ?>  # Title of API
   version: <?= $version ?>  # Version of API
 servers:
-  - url: <?= $basePath ?>  # The "url: " prefix is required
+  - url: <?= $basePath ?: "/" ?>  # The "url: " prefix is required
 paths:
   /api/login:
     post:
@@ -11,22 +11,17 @@ paths:
         - Login
       requestBody:
         content:
-          multipart/form-data:
+          application/x-www-form-urlencoded:
             schema:
-              required:
-                - username
-                - password
               type: object
               properties:
                 username:
                   type: string
                 password:
                   type: string
-            encoding:
-              username:
-                style: form
-              password:
-                style: form
+              required:
+                - username
+                - password
       responses:
         '200':
           description: Success
@@ -277,7 +272,7 @@ components:
     Bearer:
       type: apiKey
       description: '*Note: Login to get your the JWT token first, then enter "Bearer &lt;JWT Token&gt;" below, e.g.<br><em>Bearer 123456abcdef</em>'
-      name: X-Authorization
+      name: X-Authorization  # PHP
       in: header
 security:
   - Bearer: []

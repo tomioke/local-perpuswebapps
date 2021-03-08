@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Slim\Routing\RouteContext;
 use Slim\Exception\HttpBadRequestException;
@@ -27,8 +27,8 @@ class PermissionMiddleware
         $response = $ResponseFactory->createResponse();
         $routeContext = RouteContext::fromRequest($request);
         $route = $routeContext->getRoute();
-        $basePath = $routeContext->getBasePath();
-        $routeParser = $routeContext->getRouteParser();
+        //$basePath = $routeContext->getBasePath();
+        //$routeParser = $routeContext->getRouteParser();
         $pageAction = $route->getName();
         $ar = explode("-", $pageAction);
         $currentPageName = @$ar[0]; // Get current page name
@@ -70,9 +70,9 @@ class PermissionMiddleware
                 if ($Security->canList()) { // Back to list
                     $pageAction = Config("LIST_ACTION");
                     $routeName = $GLOBALS["Table"]->getListUrl();
-                    return $response->withHeader("Location", $routeParser->urlFor($routeName . "-" . $table . "-" . $pageAction))->withStatus(302);
+                    return $this->getRedirectResponse($request, $response, $routeName . "-" . $table . "-" . $pageAction);
                 } else {
-                    return $response->withHeader("Location", $routeParser->urlFor("login"))->withStatus(302);
+                    return $this->getRedirectResponse($request, $response);
                 }
             } elseif (
                 $pageAction == Config("LIST_ACTION") && !$Security->canList() || // List Permission
@@ -80,19 +80,19 @@ class PermissionMiddleware
             ) { // No permission
                 $Security->saveLastUrl();
                 $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
-                return $response->withHeader("Location", $routeParser->urlFor("login"))->withStatus(302);
+                return $this->getRedirectResponse($request, $response);
             }
         } else { // Others
             if ($pageAction == "changepassword") { // Change password
                 if (!IsPasswordReset() && !IsPasswordExpired()) {
                     if (!$Security->isLoggedIn() || $Security->isSysAdmin()) {
-                        return $response->withHeader("Location", $routeParser->urlFor("login"))->withStatus(302);
+                        return $this->getRedirectResponse($request, $response);
                     }
                 }
             } elseif ($pageAction == "personaldata") { // Personal data
                 if (!$Security->isLoggedIn() || $Security->isSysAdmin()) {
                     $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
-                    return $response->withHeader("Location", $routeParser->urlFor("login"))->withStatus(302);
+                    return $this->getRedirectResponse($request, $response);
                 }
             } elseif ($pageAction == "userpriv") { // User priv
                 $table = "level";
@@ -101,7 +101,7 @@ class PermissionMiddleware
                 $Security->loadTablePermissions($table);
                 if (!$Security->isLoggedIn() || !$Security->isAdmin()) {
                     $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
-                    return $response->withHeader("Location", $routeParser->urlFor($routeName . "-" . $table . "-" . $pageAction))->withStatus(302);
+                    return $this->getRedirectResponse($request, $response, $routeName . "-" . $table . "-" . $pageAction);
                 }
             }
         }
@@ -113,5 +113,20 @@ class PermissionMiddleware
 
         // Handle request
         return $handler->handle($request);
+    }
+
+    // Get response for redirection
+    public function getRedirectResponse(Request $request, Response $response, string $url = "login")
+    {
+        $isModal = $request->getQueryParam("modal") == "1";
+        if ($isModal) {
+            if ($url == "login" && Config("USE_MODAL_LOGIN")) { // Redirect to login
+                return $response->withHeader("Location", UrlFor($url))->withStatus(302);
+            } else {
+                return $response->withJson(["url" => UrlFor($url)]);
+            }
+        } else {
+            return $response->withHeader("Location", UrlFor($url))->withStatus(302);
+        }
     }
 }

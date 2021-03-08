@@ -1,5 +1,5 @@
 /*!
- * JavaScript for PHPMaker v2021.0.3
+ * JavaScript for PHPMaker v2021.0.9
  * Copyright (c) e.World Technology Limited. All rights reserved.
  */
 (function ($) {
@@ -2041,6 +2041,44 @@
 
   var defineProperty = _defineProperty;
 
+  function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+    try {
+      var info = gen[key](arg);
+      var value = info.value;
+    } catch (error) {
+      reject(error);
+      return;
+    }
+
+    if (info.done) {
+      resolve(value);
+    } else {
+      Promise.resolve(value).then(_next, _throw);
+    }
+  }
+
+  function _asyncToGenerator(fn) {
+    return function () {
+      var self = this,
+          args = arguments;
+      return new Promise(function (resolve, reject) {
+        var gen = fn.apply(self, args);
+
+        function _next(value) {
+          asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+        }
+
+        function _throw(err) {
+          asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+        }
+
+        _next(undefined);
+      });
+    };
+  }
+
+  var asyncToGenerator = _asyncToGenerator;
+
   function FormBase(id, pageId) {
     var self = this;
     this._initiated = false;
@@ -2139,16 +2177,53 @@
       return false;
     }; // Submit
 
-    this.submit = function (action) {
-      var form = this.getForm();
+    this.submit = /*#__PURE__*/function () {
+      var _ref = asyncToGenerator( /*#__PURE__*/regenerator.mark(function _callee(e, action) {
+        var form, args, result;
+        return regenerator.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                form = this.getForm();
 
-      if (this.canSubmit()) {
-        if (action) form.action = action;
-        form.submit();
-      }
+                if (!this.canSubmit()) {
+                  _context.next = 11;
+                  break;
+                }
 
-      return false;
-    }; // Get dynamic selection list by element name or id
+                if (action) form.action = action;
+                args = {
+                  f: this,
+                  form: form,
+                  result: true
+                };
+                $__default['default'](form).trigger("beforesubmit", [args]);
+                _context.next = 7;
+                return args.result;
+
+              case 7:
+                result = _context.sent;
+                // Support Promise
+                if ($__default['default'].isBoolean(result) && result || $__default['default'].isObject(result) && result.value) // Support Swal.fire()
+                  form.submit();
+                _context.next = 12;
+                break;
+
+              case 11:
+                this.enableForm();
+
+              case 12:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      return function (_x, _x2) {
+        return _ref.apply(this, arguments);
+      };
+    }(); // Get dynamic selection list by element name or id
 
     this.getList = function (name) {
       name = name.replace(/^(sv_)?[xy](\d*|\$rowindex\$)_|\[\]$/g, ""); // Remove element name prefix/suffix
@@ -2230,9 +2305,9 @@
         return t ? t + " " + id : id;
       };
 
-      var selector = Object.entries(this.lists).map(function (_ref) {
-        var id = _ref[0],
-            list = _ref[1];
+      var selector = Object.entries(this.lists).map(function (_ref2) {
+        var id = _ref2[0],
+            list = _ref2[1];
         return "[name='" + fixId(id, list.multiple) + "']";
       }).join();
 
@@ -2416,7 +2491,7 @@
             $__default['default']("<input type='hidden'>").attr({
               name: "filter",
               value: JSON.stringify(filters[i][1])
-            })).appendTo("body").submit();
+            })).appendTo("body").trigger("submit");
           });
         }
 
@@ -2494,9 +2569,10 @@
               $container = $tab.closest(".container-fluid");
           if ($panel.width() >= $container.width()) $panel.width($container.width() + "px");else $panel.width("auto");
         });
-        $form.submit(function (e) {
+        $form.on("submit", function (e) {
           // Bind submit event
-          return self.submit();
+          self.submit(e);
+          return false; // Disable normal submission
         });
         $form.find("[data-field], .ew-priv").on("change", function () {
           if (ew.CONFIRM_CANCEL) self.modified = true;
@@ -2703,7 +2779,7 @@
         var _this$_element, _this$_element$id;
 
         this._element = el;
-        this._checkbox = ((_this$_element = this._element) === null || _this$_element === void 0 ? void 0 : (_this$_element$id = _this$_element.id) === null || _this$_element$id === void 0 ? void 0 : _this$_element$id.match(/^[xy]_/)) ? document.getElementById(this._element.id.replace(/^[xy]_/, "u_")) : null; // Find the checkbox for the field in Update page
+        this._checkbox = (_this$_element = this._element) !== null && _this$_element !== void 0 && (_this$_element$id = _this$_element.id) !== null && _this$_element$id !== void 0 && _this$_element$id.match(/^[xy]_/) ? document.getElementById(this._element.id.replace(/^[xy]_/, "u_")) : null; // Find the checkbox for the field in Update page
       }
       /**
        * Get form element
@@ -2894,7 +2970,7 @@
 
         this.row[field.name] = field.value; // Get field value
 
-        if (!field.validate()) {
+        if (field.element && !field.validate()) {
           // Invalid field value
           this.addError(field.name, field.error);
           result = false;
@@ -3154,7 +3230,7 @@
     this.transform = function (data) {
       var results = AjaxLookup.prototype.transform.call(this, data);
       this.element.options = results.map(function (item) {
-        return new SelectionListOption(item[0], self.formatResult(item));
+        return new SelectionListOption(item.lf || item[0], self.formatResult(item));
       });
       return this.element.options;
     }; // Get suggestions by Ajax
@@ -3196,7 +3272,7 @@
 
     $input.on("typeahead:select", function (e, d) {
       self.setValue(d[self.display]);
-    }).change(function (e) {
+    }).on("change", function (e) {
       var ta = $input.data("tt-typeahead");
 
       if (ta && ta.isOpen() && !ta.menu.empty()) {
@@ -3211,11 +3287,11 @@
       }
 
       self.setValue();
-    }).blur(function (e) {
+    }).on("blur", function (e) {
       // "change" fires before blur
       var ta = $input.data("tt-typeahead");
       if (ta && ta.isOpen()) ta.menu.close();
-    }).focus(function (e) {
+    }).on("focus", function (e) {
       $input.attr("placeholder", $input.data("placeholder")).removeClass("is-invalid");
     }); // Option template ("suggestion" template)
 
@@ -3561,19 +3637,19 @@
             },
             type: "POST",
             dataType: "json",
-            data: lookup.generateRequest(),
+            data: lookup.generateRequest.bind(lookup),
             delay: options.debounce,
             processResults: function processResults(data) {
               return {
                 results: lookup.transform(data).map(function (item) {
                   return {
-                    id: item[0],
+                    id: item.lf,
                     text: lookup.formatResult({
-                      lf: item[0],
-                      df: item[1],
-                      df2: item[2],
-                      df3: item[3],
-                      df4: item[4]
+                      lf: item.lf,
+                      df: item.df,
+                      df2: item.df2,
+                      df3: item.df3,
+                      df4: item.df4
                     })
                   };
                 }),
@@ -3588,7 +3664,7 @@
         $__default['default']("select[data-select2-id='" + options.selectId + "']").select2(options);
 
         if (options.multiple && options.minimumResultsForSearch === Infinity) {
-          $__default['default']("select[id='<#= ctl #>']").on("select2:opening select2:closing", function (event) {
+          $__default['default']("select[id='" + options.name + "']").on("select2:opening select2:closing", function (event) {
             $__default['default'](this).parent().find(".select2-search__field").prop("disabled", true);
           });
         }
@@ -3669,29 +3745,45 @@
         });
       });
     }
-  } // Get API action URL
+  }
+  /**
+   * Get API action URL
+   * @param {string|string[]} action Route as string or array, e.g. "foo", ["foo", "1"]
+   * @param {string|string[]|object} query Search params, e.g. "foo=1&bar=2", [["foo", "1"], ["bar", "2"]], {"foo": "1", "bar": "2"}
+   */
 
   function getApiUrl(action, query) {
     var url = ew.PATH_BASE + ew.API_URL,
-        params = new URLSearchParams(query);
+        params = new URLSearchParams(query),
+        qs = params.toString();
 
-    if (ew.USE_URL_REWRITE) {
-      if ($__default['default'].isString(action)) {
-        // Route as string
-        url += action ? action : "";
-      } else if (Array.isArray(action)) {
-        // Route as array
-        var route = action.map(function (v) {
-          return encodeURIComponent(v);
-        }).join("/");
-        url += route ? route : "";
-      }
-    } else {
-      if (action) params.set(ew.API_ACTION_NAME, action);
+    if ($__default['default'].isString(action)) {
+      // Route as string
+      url += action ? action : "";
+    } else if (Array.isArray(action)) {
+      // Route as array
+      var route = action.map(function (v) {
+        return encodeURIComponent(v);
+      }).join("/");
+      url += route ? route : "";
     }
 
-    var qs = params.toString();
     return url + (qs ? "?" + qs : "");
+  } // Sanitize URL
+
+  function sanitizeUrl(url) {
+    var ar = url.split("?"),
+        search = ar[1];
+
+    if (search) {
+      var searchParams = new URLSearchParams(search);
+      searchParams.forEach(function (value, key) {
+        return searchParams.set(key, ew.sanitize(value));
+      });
+      search = searchParams.toString();
+    }
+
+    return ar[0] + (search ? "?" + search : "");
   } // Set session timer
 
   function setSessionTimer() {
@@ -3709,6 +3801,7 @@
           // PHP
           ew.TOKEN_NAME = token[ew.TOKEN_NAME_KEY];
           ew.ANTIFORGERY_TOKEN = token[ew.ANTIFORGERY_TOKEN_KEY];
+          if (token["JWT"]) ew.API_JWT_TOKEN = token["JWT"];
         }
       });
     }; // Reset timer
@@ -3774,7 +3867,7 @@
           } else if (result.dismiss === Swal.DismissReason.timer) {
             // Timeout
             resetTimer();
-            window.location = ew.TIMEOUT_URL + "?expired=1";
+            window.location = sanitizeUrl(ew.TIMEOUT_URL + "?expired=1");
           }
         });
       }
@@ -4010,6 +4103,10 @@
       var id = _step.value;
       if ($el.find("#" + id)) forms.get(id).init();
     }
+  } // Is function
+
+  function isFunction(x) {
+    return typeof x === "function";
   } // Prompt/Confirm/Alert
 
   function _prompt(text, cb, input, validator) {
@@ -4019,23 +4116,23 @@
         html: text,
         input: "text",
         confirmButtonText: ew.language.phrase("OKBtn"),
-        showCancelButton: $__default['default'].isFunction(cb),
+        showCancelButton: isFunction(cb),
         cancelButtonText: ew.language.phrase("CancelBtn"),
         inputValidator: validator || function (value) {
           if (!value) return ew.language.phrase("EnterValue");
         }
       })).then(function (result) {
-        if ($__default['default'].isFunction(cb)) cb(result.value);
+        if (isFunction(cb)) cb(result.value);
       });
     } else {
       // Confirm or Alert
       return Swal.fire(_objectSpread$2(_objectSpread$2({}, ew.sweetAlertSettings), {}, {
         html: "<div>" + text + "</div>",
         confirmButtonText: ew.language.phrase("OKBtn"),
-        showCancelButton: $__default['default'].isFunction(cb),
+        showCancelButton: isFunction(cb),
         cancelButtonText: ew.language.phrase("CancelBtn")
       })).then(function (result) {
-        if ($__default['default'].isFunction(cb)) cb(result.value);
+        if (isFunction(cb)) cb(result.value);
       });
     }
   }
@@ -4380,9 +4477,17 @@
         });
 
         if ($__default['default'].views) {
-          var textContent = template.textContent;
+          var textContent = template.textContent,
+              hasTag = textContent.includes("{{") && textContent.includes("}}");
 
-          if (textContent.includes("{{") && textContent.includes("}}")) {
+          if (!hasTag) {
+            var selector = ew.jsRenderAttributes.map(function (attr) {
+              return "[" + attr + "*='{{'][" + attr + "*='}}']";
+            }).join(",");
+            hasTag = template.querySelector(selector);
+          }
+
+          if (hasTag) {
             // Includes JsRender template
             var scripts = Array.prototype.slice.call(template.querySelectorAll("script")); // Extract scripts
 
@@ -4420,7 +4525,7 @@
         if ($meta[0]) html += "<meta http-equiv='Content-Type' content='" + $meta.attr("content") + "'>";
 
         if (exportType == "pdf") {
-          html += "<link rel='stylesheet' type='text/css' href='" + ew.PDF_STYLESHEET_FILENAME + "'>";
+          html += "<link rel='stylesheet' href='" + ew.PDF_STYLESHEET_FILENAME + "'>";
         } else {
           html += "<style>" + $__default['default'].ajax({
             async: false,
@@ -4497,6 +4602,8 @@
 
     var fnelm = getElement("fn_x" + infix + "_" + fld, fobj); // Hidden element
 
+    if ((nelm === null || nelm === void 0 ? void 0 : nelm.type) == "hidden" && !oelm) // For example, detail key
+      return false;
     if (!oelm && (!nelm || Array.isArray(nelm) && nelm.length == 0)) return false;
 
     var getValue = function getValue(obj) {
@@ -4520,13 +4627,8 @@
     var $el = $__default['default'](el),
         val = $el.val() || $el.data("language");
     if (!val) return;
-    var params = new URLSearchParams();
-    currentUrl.searchParams.forEach(function (value, key) {
-      params.append(key, ew.sanitize(value));
-    });
-    params.set("language", ew.sanitize(val));
-    currentUrl.search = params.toString();
-    window.location = currentUrl.toString();
+    currentUrl.searchParams.set("language", val);
+    window.location = sanitizeUrl(currentUrl.toString());
   }
   /**
    * Submit action
@@ -4603,9 +4705,8 @@
           }
         }
 
-        $f.prop("action", url).submit();
-        if (action) // Action
-          $f.find("input[type=hidden][name=useraction]").remove(); // Remove the "useraction" element
+        $f.prop("action", url).trigger("submit"); // if (action) // Action
+        //     $f.find("input[type=hidden][name=useraction]").remove(); // Remove the "useraction" element
       } else {
         // Ajax
         data = $__default['default'].isObject(data) ? $__default['default'].param(data) : $__default['default'].isString(data) ? data : ""; // User data
@@ -4619,7 +4720,7 @@
 
         if (success && $__default['default'].isString(success)) success = window[success];
 
-        if ($__default['default'].isFunction(success)) {
+        if (isFunction(success)) {
           $__default['default'].post(url, data, success);
         } else if ($__default['default'].isObject(success)) {
           // "success" is Ajax settings
@@ -4683,7 +4784,7 @@
           })).attr({
             "action": url,
             "target": "ew-export-frame"
-          }).find("input[name=exporttype]").val(type).end().submit();
+          }).find("input[name=exporttype]").val(type).end().trigger("submit");
         } finally {
           // Reset
           $f.attr({
@@ -4700,7 +4801,7 @@
     } else {
       // No Custom Template
       $f.find("input[name=exporttype]").val(type);
-      if (["xml", "print"].includes(type)) $f.submit(); // Submit the form directly
+      if (["xml", "print"].includes(type)) $f.trigger("submit"); // Submit the form directly
       else fileDownload(action, $f.serialize());
     }
 
@@ -4750,7 +4851,7 @@
    *
    * @param {string} msg - Message
    * @param {callback} cb - Callback function
-   * @param {string} type - CSS class: "muted|primary|success|info|warning|danger"
+   * @param {string} type - CSS class (see https://getbootstrap.com/docs/4.5/utilities/colors/#color)
    */
 
   function _alert(msg, cb, type) {
@@ -4758,7 +4859,7 @@
       html: '<p class="text-' + (type || 'danger') + '">' + msg + '</p>',
       confirmButtonText: ew.language.phrase("OKBtn")
     })).then(function (result) {
-      if ($__default['default'].isFunction(cb)) cb(result.value);
+      if (isFunction(cb)) cb(result.value);
     });
   }
   /**
@@ -4870,7 +4971,7 @@
 
   function sort(e, url, type) {
     if (e.shiftKey && !e.ctrlKey) url = url.split("?")[0] + "?cmd=resetsort";else if (type == 2 && e.ctrlKey) url += "&ctrl=1";
-    location = url;
+    window.location = sanitizeUrl(url);
     return true;
   } // Confirm Delete Message
 
@@ -4878,7 +4979,7 @@
     clickDelete(el);
 
     _prompt(ew.language.phrase("DeleteConfirmMsg"), function (result) {
-      result && el.href ? window.location = el.href : clearDelete(el);
+      result && el.href ? window.location = sanitizeUrl(el.href) : clearDelete(el);
     });
 
     return false;
@@ -5176,7 +5277,7 @@
       }
     };
 
-    if ($__default['default'].isFunction(frm.emptyRow) && frm.emptyRow(infix)) {
+    if (isFunction(frm.emptyRow) && frm.emptyRow(infix)) {
       // Empty row
       _delete();
     } else {
@@ -5248,9 +5349,9 @@
     var obj;
 
     if ($__default['default'].isString(el)) {
-      var ar = el.split(" ");
+      var _ar = el.split(" ");
 
-      if (ar.length == 2) {
+      if (_ar.length == 2) {
         // Parent field in master table
         obj = getElements(el);
       } else {
@@ -5726,9 +5827,9 @@
     var matches = html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script\s*>/ig);
 
     for (var _iterator5 = _createForOfIteratorHelperLoose$3(matches), _step5; !(_step5 = _iterator5()).done;) {
-      var ar = _step5.value;
-      var text = ar[0];
-      if (/(\s+type\s*=\s*['"]*text\/javascript['"]*)|^((?!\s+type\s*=).)*$/i.test(ar[1])) html = html.replace(text, "");
+      var _ar2 = _step5.value;
+      var text = _ar2[0];
+      if (/(\s+type\s*=\s*['"]*text\/javascript['"]*)|^((?!\s+type\s*=).)*$/i.test(_ar2[1])) html = html.replace(text, "");
     }
 
     return html;
@@ -5773,7 +5874,7 @@
       var frm = $dlg.removeData("args").find(".modal-body form").data("form");
       if (frm) frm.destroyEditor();
       $dlg.find(".modal-body").html("");
-      $dlg.find(".modal-footer .btn-primary").unbind();
+      $dlg.find(".modal-footer .btn-primary").off();
       $dlg.data("showing", false);
     };
 
@@ -5808,7 +5909,7 @@
           list = frm.getList(el);
       if ($__default['default'].isString(data)) results = parseJson(data);
 
-      if (((_results = results) === null || _results === void 0 ? void 0 : _results.success) && results[objName]) {
+      if ((_results = results) !== null && _results !== void 0 && _results.success && results[objName]) {
         // Success
         $dlg.modal("hide");
         var result = results[objName],
@@ -5938,7 +6039,7 @@
         var _results2;
 
         // Failure
-        if ((_results2 = results) === null || _results2 === void 0 ? void 0 : _results2.error) {
+        if ((_results2 = results) !== null && _results2 !== void 0 && _results2.error) {
           var _results$error;
 
           if ($__default['default'].isString(results.error)) showToast(results.error);else if ($__default['default'].isString((_results$error = results.error) === null || _results$error === void 0 ? void 0 : _results$error.description)) showToast(results.error.description);
@@ -5976,7 +6077,7 @@
       if (frm.canSubmit()) {
         $btn.prop("disabled", false).removeClass("disabled");
         $body.css("cursor", "wait");
-        $__default['default'].post(getApiUrl(ew.API_ADD_ACTION), $__default['default'](form).serialize(), _submitSuccess).fail(_fail).always(function () {
+        $__default['default'].post(getApiUrl([ew.API_ADD_ACTION, form.elements[ew.API_OBJECT_NAME].value]), $__default['default'](form).serialize(), _submitSuccess).fail(_fail).always(function () {
           frm.enableForm();
           $btn.prop("disabled", false).removeClass("disabled");
           $body.css("cursor", "default");
@@ -6016,8 +6117,8 @@
 
       if (form) {
         // Set the filter field value
-        $__default['default'](form).keypress(function (e) {
-          if (e.which == 13 && e.target.nodeName != "TEXTAREA") return _submit();
+        $__default['default'](form).on("keydown", function (e) {
+          if (e.key == "Enter" && e.target.nodeName != "TEXTAREA") return _submit();
         });
         ar.forEach(function (v, i) {
           (function () {
@@ -6026,7 +6127,7 @@
             if (obj) {
               if (obj.options || obj.length) {
                 // Selection list
-                $__default['default'](obj).first().one("updatedone", function () {
+                $__default['default'](obj).first().one("updated", function () {
                   return selectOption(obj, v);
                 });
               } else {
@@ -6078,14 +6179,14 @@
     if (frm) frm.destroyEditor();
     var $bd = $dlg.find(".modal-body").html("");
     if ($bd.ewjtable && $bd.ewjtable("instance")) $bd.ewjtable("destroy");
-    $dlg.find(".modal-footer .btn-primary").unbind();
+    $dlg.find(".modal-footer .btn-primary").off();
     $dlg.find(".modal-dialog").removeClass(function (index, className) {
       var m = className.match(/table\-\w+/);
       return m ? m[0] : "";
     });
     $dlg.data("showing", false);
     $dlg.data("url", null);
-    if (args && args.reload) window.location.reload(true);
+    if (args && args.reload) window.location.reload();
   }
   /**
    * Show modal dialog
@@ -6159,35 +6260,75 @@
         href: url
       })[0];
       return window.location.pathname.endsWith(a.pathname);
+    };
+    /**
+     * handle result
+     *
+     * @param {Object} result - Result object
+     * @param {string|Object} result.error - Error message or object
+     * @param {string} result.error.message - Error message
+     * @param {string} result.error.description - Error message
+     * @param {string} result.failureMessage - Failure message
+     * @param {string} result.successMessage - Success message
+     * @param {string} result.warningMessage - Warning message
+     * @param {string} result.message - Message
+     * @param {string} result.url - Redirection URL
+     * @param {string} result.modal - Redirect to result.url in current modal dialog
+     * @param {boolean} result.view - result.url is View page => No primary button
+     * @param {string} result.caption - Caption of modal dialog for result.url
+     * @param {boolean} result.reload - Reload current page
+     */
+
+    var handleResult = function handleResult(result) {
+      var cb = null,
+          url = result.url,
+          reload = result.reload;
+
+      if (url || reload) {
+        cb = function cb() {
+          if (url) {
+            if (result.modal && !_current(url)) {
+              var args = $dlg.data("args");
+              args.reload = true;
+              if (result.caption) args.caption = result.caption;
+              args.btn = result.view ? null : "";
+              $dlg.data("args", args);
+              url += (url.split("?").length > 1 ? "&" : "?") + "modal=1&rnd=" + random();
+              $body.css("cursor", "wait");
+              $__default['default'].get(url).done(success).fail(_fail).always(_always);
+            } else {
+              $dlg.modal("hide");
+              window.location = sanitizeUrl(url);
+            }
+          } else if (reload) {
+            $dlg.modal("hide");
+            window.location.reload();
+          }
+        };
+      }
+
+      if ($__default['default'].isString(result.failureMessage)) {
+        _alert(result.failureMessage);
+      } else if ($__default['default'].isString(result.warningMessage)) {
+        _alert(result.warningMessage, cb, "warning");
+      } else if ($__default['default'].isString(result.message)) {
+        _alert(result.message, cb, "body");
+      } else if ($__default['default'].isString(result.successMessage)) {
+        _alert(result.successMessage, cb, "success");
+      } else if (result.error) {
+        var _result$error, _result$error2;
+
+        if ($__default['default'].isString(result.error)) _alert(result.error);else if ($__default['default'].isString((_result$error = result.error) === null || _result$error === void 0 ? void 0 : _result$error.message)) _alert(result.error.message);else if ($__default['default'].isString((_result$error2 = result.error) === null || _result$error2 === void 0 ? void 0 : _result$error2.description)) _alert(result.error.description);
+      } else if (cb) {
+        cb();
+      }
     }; // submit success
 
     var _submitSuccess = function _submitSuccess(data) {
       var result = parseJson(data);
 
       if ($__default['default'].isObject(result)) {
-        if ($__default['default'].isString(result.failureMessage)) {
-          _alert(result.failureMessage);
-        } else if (result.error) {
-          var _result$error;
-
-          if ($__default['default'].isString(result.error)) _alert(result.error);else if ($__default['default'].isString((_result$error = result.error) === null || _result$error === void 0 ? void 0 : _result$error.description)) _alert(result.error.description);
-        } else {
-          var url = result.url;
-
-          if (result.modal && !_current(url)) {
-            var args = $dlg.data("args");
-            args.reload = true;
-            if (result.caption) args.caption = result.caption;
-            args.btn = result.view ? null : "";
-            $dlg.data("args", args);
-            url += (url.split("?").length > 1 ? "&" : "?") + "modal=1&rnd=" + random();
-            $body.css("cursor", "wait");
-            $__default['default'].ajax(url).done(success).fail(_fail).always(_always);
-          } else {
-            $dlg.modal("hide");
-            window.location = url;
-          }
-        }
+        handleResult(result);
       } else {
         var body = getContent(data);
 
@@ -6282,7 +6423,7 @@
       var result = parseJson(data);
 
       if ($__default['default'].isObject(result)) {
-        if (result.error) _alert(result.error);
+        handleResult(result);
       } else {
         var args = $dlg.data("args");
         var $lnk = $__default['default'](args.lnk);
@@ -6299,8 +6440,8 @@
         var table = $lnk.data("table");
         if (table) $dlg.find(".modal-dialog").addClass("table-" + table);
         var $btn = $dlg.find(".modal-footer .btn-primary").addClass("ew-submit").click(_submit);
-        $dlg.find(".modal-body form").keypress(function (e) {
-          if (e.which == 13 && e.target.nodeName != "TEXTAREA") return $btn.click();
+        $dlg.find(".modal-body form").on("keydown", function (e) {
+          if (e.key == "Enter" && e.target.nodeName != "TEXTAREA") return $btn.click();
         });
         ew.modalDialog = $dlg.modal("show");
         executeScript(data, "ModalDialog");
@@ -6772,6 +6913,10 @@
           maxNumberOfFiles: ew.language.phrase("UploadErrMsgMaxNumberOfFiles"),
           minFileSize: ew.language.phrase("UploadErrMsgMinFileSize")
         },
+        beforeSend: function beforeSend(jqxhr, settings) {
+          if (ew.API_JWT_TOKEN && !ew.IS_WINDOWS_AUTHENTICATION) // Do NOT set JWT authorization header if Windows Authentication
+            jqxhr.setRequestHeader(ew.API_JWT_AUTHORIZATION_HEADER, "Bearer " + ew.API_JWT_TOKEN);
+        },
         done: function done(e, data) {
           if (data.result && data.result.files && Array.isArray(data.result.files.importfiles)) {
             var ok = true;
@@ -6808,7 +6953,7 @@
 
       if ($this.data("imported")) {
         $this.data("imported", false);
-        window.location.reload(true);
+        window.location.reload();
       }
     });
     hideMessage();
@@ -6834,7 +6979,7 @@
         var destEl = getElements(dest_array[j].replace(/^x_/, "x" + rowindex + "_"), f);
 
         if (destEl) {
-          var val = $__default['default'].isValue(result["af" + j]) ? result["af" + j] : "";
+          var val = $__default['default'].isValue(result["af" + j]) ? String(result["af" + j]) : "";
           var args = {
             results: results,
             result: result,
@@ -6977,7 +7122,7 @@
         return this.validateFields();
       };
 
-      frm.submit = function () {
+      frm.submit = function (e) {
         if (!this.validate()) return false;
         var qs = $f.serialize(),
             data = "";
@@ -7005,7 +7150,7 @@
     $dlg.modal("hide").find(".modal-title").html(args.hdr);
     $dlg.find(".modal-footer .btn-primary").off().click(function (e) {
       e.preventDefault();
-      if (frm.submit()) $dlg.modal("hide");
+      if (frm.submit(e)) $dlg.modal("hide");
     });
     ew.emailDialog = $dlg.modal("show");
     return false;
@@ -7118,10 +7263,16 @@
    */
 
   function ajax(data, callback) {
-    if (!$__default['default'].isObject(data)) return undefined;
-    var action = data.action;
-    if (!action) return undefined;
-    delete data.action;
+    if (!$__default['default'].isObject(data) || !data.url && !data.action) return undefined;
+    var action;
+
+    if (data.url) {
+      if (data.url.startsWith(getApiUrl())) action = data.url.replace(getApiUrl(), "").split("/")[0];else if (data.url.startsWith(ew.API_URL)) action = data.url.replace(ew.API_URL, "").split("/")[0];
+    } else {
+      action = data.action;
+      delete data.action;
+    }
+
     var obj = Object.assign({}, data);
 
     var _convert = function _convert(response) {
@@ -7142,13 +7293,14 @@
       return response;
     };
 
-    var url = getApiUrl(action),
+    var url = obj.url || getApiUrl(action),
         // URL
-    type = obj.type || "POST";
+    type = obj.type || ([ew.API_LIST_ACTION, ew.API_VIEW_ACTION, ew.API_DELETE_ACTION].includes(action) ? "GET" : "POST");
+    delete obj.url;
     delete obj.type;
     obj.dataType = "json";
 
-    if ($__default['default'].isFunction(callback)) {
+    if (isFunction(callback)) {
       // Async
       $__default['default'].ajax({
         url: url,
@@ -7904,10 +8056,10 @@
           $menu = $this.find("> .dropdown-menu");
       $this.toggleClass("dropup", $menu.offset().top + $menu.height() > $window.scrollTop() + $window.height());
     });
-    $el.find("input[name=pageno]").keypress(function (e) {
-      if (e.which == 13) {
-        currentUrl.searchParams.append(this.name, parseInt(this.value));
-        window.location = currentUrl.toString();
+    $el.find("input[name=pageno]").on("keydown", function (e) {
+      if (e.key == "Enter") {
+        currentUrl.searchParams.set(this.name, parseInt(this.value));
+        window.location = sanitizeUrl(currentUrl.toString());
         return false;
       }
     });
@@ -7955,8 +8107,8 @@
   } // Redirect by HTTP GET or POST
 
   function redirect(url, f, method) {
-    var ar = url.split("?"),
-        params = new URLSearchParams(ar[1]);
+    var newUrl = new URL(url),
+        params = newUrl.searchParams;
     params.set(ew.TOKEN_NAME_KEY, ew.TOKEN_NAME); // PHP
 
     params.set(ew.ANTIFORGERY_TOKEN_KEY, ew.ANTIFORGERY_TOKEN); // PHP
@@ -7971,14 +8123,13 @@
       params.forEach(function (value, key) {
         $__default['default']('<input type="hidden">').attr({
           name: key,
-          value: sanitize(value)
+          value: ew.sanitize(value)
         }).appendTo($form);
       });
-      $form.submit();
+      $form.trigger("submit");
     } else {
       // GET
-      var search = params.toString();
-      window.location = ar[0] + (search ? "?" + search : "");
+      window.location = sanitizeUrl(newUrl.toString());
     }
   } // Show/Hide password
 
@@ -8129,6 +8280,7 @@
     initIcons: initIcons,
     initPasswordOptions: initPasswordOptions,
     getApiUrl: getApiUrl,
+    sanitizeUrl: sanitizeUrl,
     setSessionTimer: setSessionTimer,
     initExportLinks: initExportLinks,
     initMultiSelectCheckboxes: initMultiSelectCheckboxes,
@@ -8140,6 +8292,7 @@
     initTooltips: initTooltips,
     parseJson: parseJson,
     searchOperatorChanged: searchOperatorChanged,
+    isFunction: isFunction,
     prompt: _prompt,
     toast: toast,
     showToast: showToast,

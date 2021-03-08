@@ -1,12 +1,11 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $BukuAdd = &$Page;
 ?>
 <script>
-if (!ew.vars.tables.buku) ew.vars.tables.buku = <?= JsonEncode(GetClientVar("tables", "buku")) ?>;
 var currentForm, currentPageID;
 var fbukuadd;
 loadjs.ready("head", function () {
@@ -16,14 +15,17 @@ loadjs.ready("head", function () {
     fbukuadd = currentForm = new ew.Form("fbukuadd", "add");
 
     // Add fields
-    var fields = ew.vars.tables.buku.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "buku")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.buku)
+        ew.vars.tables.buku = currentTable;
     fbukuadd.addFields([
-        ["cover", [fields.cover.required ? ew.Validators.fileRequired(fields.cover.caption) : null], fields.cover.isInvalid],
-        ["nama_buku", [fields.nama_buku.required ? ew.Validators.required(fields.nama_buku.caption) : null], fields.nama_buku.isInvalid],
-        ["pengarang", [fields.pengarang.required ? ew.Validators.required(fields.pengarang.caption) : null], fields.pengarang.isInvalid],
-        ["penerbit", [fields.penerbit.required ? ew.Validators.required(fields.penerbit.caption) : null], fields.penerbit.isInvalid],
-        ["kode_isbn", [fields.kode_isbn.required ? ew.Validators.required(fields.kode_isbn.caption) : null], fields.kode_isbn.isInvalid],
-        ["rangkuman", [fields.rangkuman.required ? ew.Validators.required(fields.rangkuman.caption) : null], fields.rangkuman.isInvalid]
+        ["cover", [fields.cover.visible && fields.cover.required ? ew.Validators.fileRequired(fields.cover.caption) : null], fields.cover.isInvalid],
+        ["nama_buku", [fields.nama_buku.visible && fields.nama_buku.required ? ew.Validators.required(fields.nama_buku.caption) : null], fields.nama_buku.isInvalid],
+        ["pengarang", [fields.pengarang.visible && fields.pengarang.required ? ew.Validators.required(fields.pengarang.caption) : null], fields.pengarang.isInvalid],
+        ["penerbit", [fields.penerbit.visible && fields.penerbit.required ? ew.Validators.required(fields.penerbit.caption) : null], fields.penerbit.isInvalid],
+        ["kode_isbn", [fields.kode_isbn.visible && fields.kode_isbn.required ? ew.Validators.required(fields.kode_isbn.caption) : null], fields.kode_isbn.isInvalid],
+        ["rangkuman", [fields.rangkuman.visible && fields.rangkuman.required ? ew.Validators.required(fields.rangkuman.caption) : null], fields.rangkuman.isInvalid]
     ]);
 
     // Set invalid fields

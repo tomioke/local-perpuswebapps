@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Report table class
@@ -34,45 +34,45 @@ class ReportTable extends DbTableBase
     // Session Group Per Page
     public function getGroupPerPage()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_grpperpage"];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_grpperpage");
     }
 
     public function setGroupPerPage($v)
     {
-        @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_grpperpage"] = $v;
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_grpperpage"] = $v;
     }
 
     // Session Start Group
     public function getStartGroup()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_start"];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_start");
     }
 
     public function setStartGroup($v)
     {
-        @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_start"] = $v;
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_start"] = $v;
     }
 
     // Session Order By
     public function getOrderBy()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_orderby"];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_orderby");
     }
 
     public function setOrderBy($v)
     {
-        @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_orderby"] = $v;
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_orderby"] = $v;
     }
 
     // Session Order By (for non-grouping fields)
     public function getDetailOrderBy()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_detailorderby"];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_detailorderby");
     }
 
     public function setDetailOrderBy($v)
     {
-        @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_detailorderby"] = $v;
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_detailorderby"] = $v;
     }
 
     // Reset attributes for table object

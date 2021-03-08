@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -74,7 +74,6 @@ class Logout
 
         // Initialize
         $GLOBALS["Page"] = &$this;
-        $this->TokenTimeout = SessionTimeoutTime();
 
         // Language object
         $Language = Container("language");
@@ -99,6 +98,30 @@ class Logout
         return is_object($Response) ? $Response->getBody() : ob_get_clean();
     }
 
+    // Is lookup
+    public function isLookup()
+    {
+        return SameText(Route(0), Config("API_LOOKUP_ACTION"));
+    }
+
+    // Is AutoFill
+    public function isAutoFill()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autofill");
+    }
+
+    // Is AutoSuggest
+    public function isAutoSuggest()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autosuggest");
+    }
+
+    // Is modal lookup
+    public function isModalLookup()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "modal");
+    }
+
     // Is terminated
     public function isTerminated()
     {
@@ -116,7 +139,7 @@ class Logout
         if ($this->terminated) {
             return;
         }
-        global $ExportFileName, $TempImages, $DashboardReport;
+        global $ExportFileName, $TempImages, $DashboardReport, $Response;
 
         // Page is terminated
         $this->terminated = true;
@@ -144,6 +167,11 @@ class Logout
                 WriteJson(array_merge(["success" => false], $this->getMessages()));
             }
             return;
+        } else { // Check if response is JSON
+            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+                $this->clearMessages();
+                return;
+            }
         }
 
         // Go to URL if specified
@@ -214,7 +242,7 @@ class Logout
                 $cookie = new \Delight\Cookie\Cookie(session_name());
                 $cookie->setSameSiteRestriction(Config("COOKIE_SAMESITE"));
                 $cookie->setHttpOnly(Config("COOKIE_HTTP_ONLY"));
-                $cookie->setSecureOnly(Config("COOKIE_SAMESITE") == "None" || Config("COOKIE_SECURE"));
+                $cookie->setSecureOnly(Config("COOKIE_SAMESITE") == "None" || IsHttps() && Config("COOKIE_SECURE"));
                 $cookie->delete();
             }
 

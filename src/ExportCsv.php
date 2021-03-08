@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Export to CSV
@@ -80,8 +80,8 @@ class ExportCsv extends ExportBase
         if (!Config("DEBUG") && ob_get_length()) {
             ob_end_clean();
         }
-        header('Content-Type: text/csv' . ((Config("PROJECT_CHARSET") != "") ? '; charset=' . Config("PROJECT_CHARSET") : ''));
-        header('Content-Disposition: attachment; filename=' . $ExportFileName . '.csv');
+        AddHeader('Content-Type', 'text/csv' . ((Config("PROJECT_CHARSET") != "") ? '; charset=' . Config("PROJECT_CHARSET") : ''));
+        AddHeader('Content-Disposition', 'attachment; filename=' . $ExportFileName . '.csv');
         if (SameText(Config("PROJECT_CHARSET"), "utf-8")) {
             Write("\xEF\xBB\xBF");
         }

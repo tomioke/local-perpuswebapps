@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -102,7 +102,6 @@ class Userpriv extends Level
 
         // Initialize
         $GLOBALS["Page"] = &$this;
-        $this->TokenTimeout = SessionTimeoutTime();
 
         // Language object
         $Language = Container("language");
@@ -135,6 +134,30 @@ class Userpriv extends Level
         return is_object($Response) ? $Response->getBody() : ob_get_clean();
     }
 
+    // Is lookup
+    public function isLookup()
+    {
+        return SameText(Route(0), Config("API_LOOKUP_ACTION"));
+    }
+
+    // Is AutoFill
+    public function isAutoFill()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autofill");
+    }
+
+    // Is AutoSuggest
+    public function isAutoSuggest()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autosuggest");
+    }
+
+    // Is modal lookup
+    public function isModalLookup()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "modal");
+    }
+
     // Is terminated
     public function isTerminated()
     {
@@ -152,7 +175,7 @@ class Userpriv extends Level
         if ($this->terminated) {
             return;
         }
-        global $ExportFileName, $TempImages, $DashboardReport;
+        global $ExportFileName, $TempImages, $DashboardReport, $Response;
 
         // Page is terminated
         $this->terminated = true;
@@ -180,6 +203,11 @@ class Userpriv extends Level
                 WriteJson(array_merge(["success" => false], $this->getMessages()));
             }
             return;
+        } else { // Check if response is JSON
+            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+                $this->clearMessages();
+                return;
+            }
         }
 
         // Go to URL if specified
@@ -231,8 +259,9 @@ class Userpriv extends Level
         foreach ($ar as $t) {
             if ($t[3]) { // Allowed
                 $tempPriv = $Security->getUserLevelPrivEx($t[4] . $t[0], $Security->CurrentUserLevelID);
-                if (($tempPriv & ALLOW_ADMIN) == ALLOW_ADMIN) // Allow Admin
+                if (($tempPriv & ALLOW_ADMIN) == ALLOW_ADMIN) { // Allow Admin
                     $this->TableList[] = array_merge($t, [$tempPriv]);
+                }
             }
         }
         $this->TableNameCount = count($this->TableList);
@@ -280,8 +309,10 @@ class Userpriv extends Level
                 }
                 $ar = [];
                 for ($i = 0; $i < $this->TableNameCount; $i++) {
-                    $tempPriv = $Security->getUserLevelPrivEx($this->TableList[$i][4] . $this->TableList[$i][0], $this->ID_Level->CurrentValue);
-                    $ar[] = ["table" => ConvertToUtf8($this->getTableCaption($i)), "index" => $i, "permission" => $tempPriv, "allowed" => $this->TableList[$i][5]];
+                    $table = $this->TableList[$i];
+                    $cnt = count($table);
+                    $tempPriv = $Security->getUserLevelPrivEx($table[4] . $table[0], $this->ID_Level->CurrentValue);
+                    $ar[] = ["table" => ConvertToUtf8($this->getTableCaption($i)), "index" => $i, "permission" => $tempPriv, "allowed" => $table[$cnt - 1]];
                 }
                 $this->Privileges["disabled"] = $this->Disabled;
                 $this->Privileges["permissions"] = $ar;
@@ -310,7 +341,7 @@ class Userpriv extends Level
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
             // Pass table and field properties to client side
-            $this->toClientVar(["tableCaption"], ["caption", "Required", "IsInvalid", "Raw"]);
+            $this->toClientVar(["tableCaption"], ["caption", "Visible", "Required", "IsInvalid", "Raw"]);
 
             // Setup login status
             SetupLoginStatus();
@@ -334,18 +365,20 @@ class Userpriv extends Level
         global $Security;
         $c = Conn(Config("USER_LEVEL_PRIV_DBID"));
         foreach ($this->Privileges as $i => $privilege) {
+            $table = $this->TableList[$i];
+            $cnt = count($table);
             $sql = "SELECT * FROM " . Config("USER_LEVEL_PRIV_TABLE") . " WHERE " .
-                Config("USER_LEVEL_PRIV_TABLE_NAME_FIELD") . " = '" . AdjustSql($this->TableList[$i][4] . $this->TableList[$i][0], Config("USER_LEVEL_PRIV_DBID")) . "' AND " .
+                Config("USER_LEVEL_PRIV_TABLE_NAME_FIELD") . " = '" . AdjustSql($table[4] . $table[0], Config("USER_LEVEL_PRIV_DBID")) . "' AND " .
                 Config("USER_LEVEL_PRIV_USER_LEVEL_ID_FIELD") . " = " . $this->ID_Level->CurrentValue;
-            $privilege = $privilege & $this->TableList[$i][5]; // Set maximum allowed privilege (protect from hacking)
+            $privilege = $privilege & $table[$cnt - 1]; // Set maximum allowed privilege (protect from hacking)
             $rs = $c->fetchArray($sql);
             if ($rs) {
                 $sql = "UPDATE " . Config("USER_LEVEL_PRIV_TABLE") . " SET " . Config("USER_LEVEL_PRIV_PRIV_FIELD") . " = " . $privilege . " WHERE " .
-                    Config("USER_LEVEL_PRIV_TABLE_NAME_FIELD") . " = '" . AdjustSql($this->TableList[$i][4] . $this->TableList[$i][0], Config("USER_LEVEL_PRIV_DBID")) . "' AND " .
+                    Config("USER_LEVEL_PRIV_TABLE_NAME_FIELD") . " = '" . AdjustSql($table[4] . $table[0], Config("USER_LEVEL_PRIV_DBID")) . "' AND " .
                     Config("USER_LEVEL_PRIV_USER_LEVEL_ID_FIELD") . " = " . $this->ID_Level->CurrentValue;
                 $c->executeUpdate($sql);
             } else {
-                $sql = "INSERT INTO " . Config("USER_LEVEL_PRIV_TABLE") . " (" . Config("USER_LEVEL_PRIV_TABLE_NAME_FIELD") . ", " . Config("USER_LEVEL_PRIV_USER_LEVEL_ID_FIELD") . ", " . Config("USER_LEVEL_PRIV_PRIV_FIELD") . ") VALUES ('" . AdjustSql($this->TableList[$i][4] . $this->TableList[$i][0], Config("USER_LEVEL_PRIV_DBID")) . "', " . $this->ID_Level->CurrentValue . ", " . $privilege . ")";
+                $sql = "INSERT INTO " . Config("USER_LEVEL_PRIV_TABLE") . " (" . Config("USER_LEVEL_PRIV_TABLE_NAME_FIELD") . ", " . Config("USER_LEVEL_PRIV_USER_LEVEL_ID_FIELD") . ", " . Config("USER_LEVEL_PRIV_PRIV_FIELD") . ") VALUES ('" . AdjustSql($table[4] . $table[0], Config("USER_LEVEL_PRIV_DBID")) . "', " . $this->ID_Level->CurrentValue . ", " . $privilege . ")";
                 $c->executeUpdate($sql);
             }
         }
@@ -360,8 +393,9 @@ class Userpriv extends Level
         $caption = "";
         if ($i < $this->TableNameCount) {
             $caption = $Language->TablePhrase($this->TableList[$i][1], "TblCaption");
-            if ($caption == "")
+            if ($caption == "") {
                 $caption = $this->TableList[$i][2];
+            }
             if ($caption == "") {
                 $caption = $this->TableList[$i][0];
                 $caption = preg_replace('/^\{\w{8}-\w{4}-\w{4}-\w{4}-\w{12}\}/', '', $caption); // Remove project id

@@ -1,13 +1,12 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $LevelList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
-if (!ew.vars.tables.level) ew.vars.tables.level = <?= JsonEncode(GetClientVar("tables", "level")) ?>;
 var currentForm, currentPageID;
 var flevellist;
 loadjs.ready("head", function () {
@@ -18,10 +17,13 @@ loadjs.ready("head", function () {
     flevellist.formKeyCountName = '<?= $Page->FormKeyCountName ?>';
 
     // Add fields
-    var fields = ew.vars.tables.level.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "level")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.level)
+        ew.vars.tables.level = currentTable;
     flevellist.addFields([
-        ["ID_Level", [fields.ID_Level.required ? ew.Validators.required(fields.ID_Level.caption) : null, ew.Validators.userLevelId, ew.Validators.integer], fields.ID_Level.isInvalid],
-        ["Level_Name", [fields.Level_Name.required ? ew.Validators.required(fields.Level_Name.caption) : null, ew.Validators.userLevelName('ID_Level')], fields.Level_Name.isInvalid]
+        ["ID_Level", [fields.ID_Level.visible && fields.ID_Level.required ? ew.Validators.required(fields.ID_Level.caption) : null, ew.Validators.userLevelId, ew.Validators.integer], fields.ID_Level.isInvalid],
+        ["Level_Name", [fields.Level_Name.visible && fields.Level_Name.required ? ew.Validators.required(fields.Level_Name.caption) : null, ew.Validators.userLevelName('ID_Level')], fields.Level_Name.isInvalid]
     ]);
 
     // Set invalid fields

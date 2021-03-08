@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Basic Search class
@@ -42,8 +42,8 @@ class BasicSearch
     // Unset session
     public function unsetSession()
     {
-        unset($_SESSION[$this->getSessionName(Config("TABLE_BASIC_SEARCH_TYPE"))]);
-        unset($_SESSION[$this->getSessionName(Config("TABLE_BASIC_SEARCH"))]);
+        Session()->delete($this->getSessionName(Config("TABLE_BASIC_SEARCH_TYPE")))
+            ->delete($this->getSessionName(Config("TABLE_BASIC_SEARCH")));
     }
 
     // Isset session
@@ -86,13 +86,13 @@ class BasicSearch
     // Get keyword
     public function getKeyword()
     {
-        return @$_SESSION[$this->getSessionName(Config("TABLE_BASIC_SEARCH"))];
+        return Session($this->getSessionName(Config("TABLE_BASIC_SEARCH")));
     }
 
     // Get type
     public function getType()
     {
-        return @$_SESSION[$this->getSessionName(Config("TABLE_BASIC_SEARCH_TYPE"))];
+        return Session($this->getSessionName(Config("TABLE_BASIC_SEARCH_TYPE")));
     }
 
     // Get type name

@@ -1,13 +1,12 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PenerbitList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
-if (!ew.vars.tables.penerbit) ew.vars.tables.penerbit = <?= JsonEncode(GetClientVar("tables", "penerbit")) ?>;
 var currentForm, currentPageID;
 var fpenerbitlist;
 loadjs.ready("head", function () {
@@ -18,10 +17,13 @@ loadjs.ready("head", function () {
     fpenerbitlist.formKeyCountName = '<?= $Page->FormKeyCountName ?>';
 
     // Add fields
-    var fields = ew.vars.tables.penerbit.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "penerbit")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.penerbit)
+        ew.vars.tables.penerbit = currentTable;
     fpenerbitlist.addFields([
-        ["nama_penerbit", [fields.nama_penerbit.required ? ew.Validators.required(fields.nama_penerbit.caption) : null], fields.nama_penerbit.isInvalid],
-        ["alamat_penerbit", [fields.alamat_penerbit.required ? ew.Validators.required(fields.alamat_penerbit.caption) : null], fields.alamat_penerbit.isInvalid]
+        ["nama_penerbit", [fields.nama_penerbit.visible && fields.nama_penerbit.required ? ew.Validators.required(fields.nama_penerbit.caption) : null], fields.nama_penerbit.isInvalid],
+        ["alamat_penerbit", [fields.alamat_penerbit.visible && fields.alamat_penerbit.required ? ew.Validators.required(fields.alamat_penerbit.caption) : null], fields.alamat_penerbit.isInvalid]
     ]);
 
     // Set invalid fields

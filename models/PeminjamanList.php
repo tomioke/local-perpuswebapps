@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -158,7 +158,6 @@ class PeminjamanList extends Peminjaman
 
         // Initialize
         $GLOBALS["Page"] = &$this;
-        $this->TokenTimeout = SessionTimeoutTime();
 
         // Language object
         $Language = Container("language");
@@ -244,6 +243,30 @@ class PeminjamanList extends Peminjaman
         return is_object($Response) ? $Response->getBody() : ob_get_clean();
     }
 
+    // Is lookup
+    public function isLookup()
+    {
+        return SameText(Route(0), Config("API_LOOKUP_ACTION"));
+    }
+
+    // Is AutoFill
+    public function isAutoFill()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autofill");
+    }
+
+    // Is AutoSuggest
+    public function isAutoSuggest()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "autosuggest");
+    }
+
+    // Is modal lookup
+    public function isModalLookup()
+    {
+        return $this->isLookup() && SameText(Post("ajax"), "modal");
+    }
+
     // Is terminated
     public function isTerminated()
     {
@@ -261,7 +284,7 @@ class PeminjamanList extends Peminjaman
         if ($this->terminated) {
             return;
         }
-        global $ExportFileName, $TempImages, $DashboardReport;
+        global $ExportFileName, $TempImages, $DashboardReport, $Response;
 
         // Page is terminated
         $this->terminated = true;
@@ -307,6 +330,11 @@ class PeminjamanList extends Peminjaman
                 WriteJson(array_merge(["success" => false], $this->getMessages()));
             }
             return;
+        } else { // Check if response is JSON
+            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+                $this->clearMessages();
+                return;
+            }
         }
 
         // Go to URL if specified
@@ -521,6 +549,7 @@ class PeminjamanList extends Peminjaman
     public $MultiSelectKey;
     public $Command;
     public $RestoreSearch = false;
+    public $HashValue; // Hash value
     public $DetailPages;
     public $OldRecordset;
 
@@ -680,7 +709,7 @@ class PeminjamanList extends Peminjaman
                     }
 
                     // Insert Inline
-                    if ($this->isInsert() && @$_SESSION[SESSION_INLINE_MODE] == "add") {
+                    if ($this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
                         $this->setKey(Post($this->OldKeyName));
                         $this->inlineInsert();
                     }
@@ -853,7 +882,7 @@ class PeminjamanList extends Peminjaman
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
             // Pass table and field properties to client side
-            $this->toClientVar(["tableCaption"], ["caption", "Required", "IsInvalid", "Raw"]);
+            $this->toClientVar(["tableCaption"], ["caption", "Visible", "Required", "IsInvalid", "Raw"]);
 
             // Setup login status
             SetupLoginStatus();
@@ -1407,7 +1436,6 @@ class PeminjamanList extends Peminjaman
         $this->listOptionsRendering();
 
         // Set up row action and key
-        $keyName = "";
         if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
             $CurrentForm->Index = $this->RowIndex;
             $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
@@ -1436,7 +1464,7 @@ class PeminjamanList extends Peminjaman
             $this->ListOptions->CustomItem = "copy"; // Show copy column only
             $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
             $opt->Body = "<div" . (($opt->OnLeft) ? " class=\"text-right\"" : "") . ">" .
-            "<a class=\"ew-grid-link ew-inline-insert\" title=\"" . HtmlTitle($Language->phrase("InsertLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InsertLink")) . "\" href=\"#\" onclick=\"return ew.forms.get(this).submit('" . $this->pageName() . "');\">" . $Language->phrase("InsertLink") . "</a>&nbsp;" .
+            "<a class=\"ew-grid-link ew-inline-insert\" title=\"" . HtmlTitle($Language->phrase("InsertLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InsertLink")) . "\" href=\"#\" onclick=\"ew.forms.get(this).submit(event, '" . $this->pageName() . "'); return false;\">" . $Language->phrase("InsertLink") . "</a>&nbsp;" .
             "<a class=\"ew-grid-link ew-inline-cancel\" title=\"" . HtmlTitle($Language->phrase("CancelLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("CancelLink")) . "\" href=\"" . $cancelurl . "\">" . $Language->phrase("CancelLink") . "</a>" .
             "<input type=\"hidden\" name=\"action\" id=\"action\" value=\"insert\"></div>";
             return;
@@ -2283,7 +2311,7 @@ class PeminjamanList extends Peminjaman
      * Import file
      *
      * @param string $filetoken File token to locate the uploaded import file
-     * @return boolean
+     * @return bool
      */
     public function import($filetoken)
     {
@@ -2500,7 +2528,7 @@ class PeminjamanList extends Peminjaman
      * Get import header
      *
      * @param object $ws PhpSpreadsheet worksheet
-     * @param integer $rowIdx Row index for header row (1-based)
+     * @param int $rowIdx Row index for header row (1-based)
      * @param string $endColName End column Name (e.g. "F")
      * @return array
      */
@@ -2514,8 +2542,8 @@ class PeminjamanList extends Peminjaman
      * Get import records
      *
      * @param object $ws PhpSpreadsheet worksheet
-     * @param integer $startRowIdx Start row index
-     * @param integer $endRowIdx End row index
+     * @param int $startRowIdx Start row index
+     * @param int $endRowIdx End row index
      * @param string $endColName End column Name (e.g. "F")
      * @return array
      */
@@ -2529,8 +2557,8 @@ class PeminjamanList extends Peminjaman
      * Import a row
      *
      * @param array $row
-     * @param integer $cnt
-     * @return boolean
+     * @param int $cnt
+     * @return bool
      */
     protected function importRow($row, $cnt)
     {
@@ -2564,7 +2592,7 @@ class PeminjamanList extends Peminjaman
      *
      * @param object $fld Field object
      * @param object $value
-     * @return boolean
+     * @return bool
      */
     protected function checkValue($fld, $value)
     {
@@ -2634,8 +2662,13 @@ class PeminjamanList extends Peminjaman
 
         // Call Row Inserting event
         $insertRow = $this->rowInserting($rsold, $rsnew);
+        $addRow = false;
         if ($insertRow) {
-            $addRow = $this->insert($rsnew);
+            try {
+                $addRow = $this->insert($rsnew);
+            } catch (\Exception $e) {
+                $this->setFailureMessage($e->getMessage());
+            }
             if ($addRow) {
             }
         } else {
@@ -2823,7 +2856,7 @@ class PeminjamanList extends Peminjaman
     /**
     * Export data in HTML/CSV/Word/Excel/XML/Email/PDF format
     *
-    * @param boolean $return Return the data rather than output it
+    * @param bool $return Return the data rather than output it
     * @return mixed
     */
     public function exportData($return = false)
@@ -2837,7 +2870,9 @@ class PeminjamanList extends Peminjaman
 
         // Export all
         if ($this->ExportAll) {
-            set_time_limit(Config("EXPORT_ALL_TIME_LIMIT"));
+            if (Config("EXPORT_ALL_TIME_LIMIT") >= 0) {
+                @set_time_limit(Config("EXPORT_ALL_TIME_LIMIT"));
+            }
             $this->DisplayRecords = $this->TotalRecords;
             $this->StopRecord = $this->TotalRecords;
         } else { // Export one page only

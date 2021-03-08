@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -76,6 +76,7 @@ class Peminjaman extends DbTable
         $this->id_peminjaman->IsPrimaryKey = true; // Primary key field
         $this->id_peminjaman->Sortable = true; // Allow sort
         $this->id_peminjaman->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_peminjaman->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_peminjaman->Param, "CustomMsg");
         $this->Fields['id_peminjaman'] = &$this->id_peminjaman;
 
         // berita_peminjaman
@@ -83,6 +84,7 @@ class Peminjaman extends DbTable
         $this->berita_peminjaman->Nullable = false; // NOT NULL field
         $this->berita_peminjaman->Required = true; // Required field
         $this->berita_peminjaman->Sortable = true; // Allow sort
+        $this->berita_peminjaman->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->berita_peminjaman->Param, "CustomMsg");
         $this->Fields['berita_peminjaman'] = &$this->berita_peminjaman;
 
         // id_buku
@@ -94,6 +96,7 @@ class Peminjaman extends DbTable
         $this->id_buku->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->id_buku->Lookup = new Lookup('id_buku', 'buku', false, 'id_buku', ["nama_buku","","",""], [], [], [], [], [], [], '', '');
         $this->id_buku->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_buku->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_buku->Param, "CustomMsg");
         $this->Fields['id_buku'] = &$this->id_buku;
 
         // id_anggota
@@ -105,6 +108,7 @@ class Peminjaman extends DbTable
         $this->id_anggota->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->id_anggota->Lookup = new Lookup('id_anggota', 'anggota', false, 'id_anggota', ["nama_anggota","","",""], [], [], [], [], [], [], '', '');
         $this->id_anggota->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_anggota->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_anggota->Param, "CustomMsg");
         $this->Fields['id_anggota'] = &$this->id_anggota;
 
         // tgl_peminjaman
@@ -112,6 +116,7 @@ class Peminjaman extends DbTable
         $this->tgl_peminjaman->Nullable = false; // NOT NULL field
         $this->tgl_peminjaman->Sortable = true; // Allow sort
         $this->tgl_peminjaman->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->tgl_peminjaman->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->tgl_peminjaman->Param, "CustomMsg");
         $this->Fields['tgl_peminjaman'] = &$this->tgl_peminjaman;
 
         // rencana_tgl_kembali
@@ -120,6 +125,7 @@ class Peminjaman extends DbTable
         $this->rencana_tgl_kembali->Required = true; // Required field
         $this->rencana_tgl_kembali->Sortable = true; // Allow sort
         $this->rencana_tgl_kembali->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->rencana_tgl_kembali->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->rencana_tgl_kembali->Param, "CustomMsg");
         $this->Fields['rencana_tgl_kembali'] = &$this->rencana_tgl_kembali;
 
         // kondisi_buku_peminjaman
@@ -127,6 +133,7 @@ class Peminjaman extends DbTable
         $this->kondisi_buku_peminjaman->Nullable = false; // NOT NULL field
         $this->kondisi_buku_peminjaman->Required = true; // Required field
         $this->kondisi_buku_peminjaman->Sortable = true; // Allow sort
+        $this->kondisi_buku_peminjaman->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->kondisi_buku_peminjaman->Param, "CustomMsg");
         $this->Fields['kondisi_buku_peminjaman'] = &$this->kondisi_buku_peminjaman;
     }
 
@@ -217,7 +224,7 @@ class Peminjaman extends DbTable
     // Session ORDER BY for List page
     public function getSessionOrderByList()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY_LIST")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY_LIST"));
     }
 
     public function setSessionOrderByList($v)
@@ -389,18 +396,21 @@ class Peminjaman extends DbTable
         $cnt = -1;
         $rs = null;
         if ($sql instanceof \Doctrine\DBAL\Query\QueryBuilder) { // Query builder
-            $sql = $sql->resetQueryPart("orderBy")->getSQL();
+            $sqlwrk = clone $sql;
+            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
+        } else {
+            $sqlwrk = $sql;
         }
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
             ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sql) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sql) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sql) && !preg_match('/\s+order\s+by\s+/i', $sql)
+            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sql);
+            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sql . ") COUNT_TABLE";
+            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
         $rs = $conn->executeQuery($sqlwrk);
@@ -735,18 +745,17 @@ class Peminjaman extends DbTable
     // Return page URL
     public function getReturnUrl()
     {
+        $referUrl = ReferUrl();
+        $referPageName = ReferPageName();
         $name = PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL");
         // Get referer URL automatically
-        if (ReferUrl() != "" && ReferPageName() != CurrentPageName() && ReferPageName() != "login") { // Referer not same page or login page
-            $_SESSION[$name] = ReferUrl(); // Save to Session
+        if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
+            $_SESSION[$name] = $referUrl; // Save to Session
         }
-        if (@$_SESSION[$name] != "") {
-            return $_SESSION[$name];
-        } else {
-            return GetUrl("PeminjamanList");
-        }
+        return $_SESSION[$name] ?? GetUrl("PeminjamanList");
     }
 
+    // Set return page URL
     public function setReturnUrl($v)
     {
         $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL")] = $v;
@@ -1333,7 +1342,7 @@ SORTHTML;
         }
 
         // Call User ID Filtering event
-        $this->userIDFiltering($filterWrk);
+        $this->userIdFiltering($filterWrk);
         AddFilter($filter, $filterWrk);
         return $filter;
     }

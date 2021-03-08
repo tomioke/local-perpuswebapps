@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PengarangView = &$Page;
@@ -23,6 +23,9 @@ loadjs.ready("head", function () {
 });
 </script>
 <?php } ?>
+<script>
+if (!ew.vars.tables.pengarang) ew.vars.tables.pengarang = <?= JsonEncode(GetClientVar("tables", "pengarang")) ?>;
+</script>
 <?php if (!$Page->isExport()) { ?>
 <div class="btn-toolbar ew-toolbar">
 <?php $Page->ExportOptions->render("body") ?>
@@ -69,7 +72,7 @@ $Page->showMessage();
     if (in_array("buku", explode(",", $Page->getCurrentDetailTable())) && $buku->DetailView) {
 ?>
 <?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("buku", "TblCaption") ?>&nbsp;<?= str_replace("%c", $Page->buku_Count, $Language->phrase("DetailCount")) ?></h4>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("buku", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("buku")->Count, $Language->phrase("DetailCount")) ?></h4>
 <?php } ?>
 <?php include_once "BukuGrid.php" ?>
 <?php } ?>

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PeminjamanDelete = &$Page;
@@ -20,6 +20,9 @@ loadjs.ready("head", function () {
 loadjs.ready("head", function () {
     // Write your table-specific client script here, no need to add script tags.
 });
+</script>
+<script>
+if (!ew.vars.tables.peminjaman) ew.vars.tables.peminjaman = <?= JsonEncode(GetClientVar("tables", "peminjaman")) ?>;
 </script>
 <?php $Page->showPageHeader(); ?>
 <?php

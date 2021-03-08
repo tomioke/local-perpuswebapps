@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -72,6 +72,7 @@ class Permission2 extends DbTable
         $this->Table_Name->Nullable = false; // NOT NULL field
         $this->Table_Name->Required = true; // Required field
         $this->Table_Name->Sortable = true; // Allow sort
+        $this->Table_Name->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->Table_Name->Param, "CustomMsg");
         $this->Fields['Table_Name'] = &$this->Table_Name;
 
         // ID_Level
@@ -80,6 +81,7 @@ class Permission2 extends DbTable
         $this->ID_Level->Required = true; // Required field
         $this->ID_Level->Sortable = true; // Allow sort
         $this->ID_Level->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->ID_Level->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->ID_Level->Param, "CustomMsg");
         $this->Fields['ID_Level'] = &$this->ID_Level;
 
         // Permission
@@ -88,6 +90,7 @@ class Permission2 extends DbTable
         $this->_Permission->Required = true; // Required field
         $this->_Permission->Sortable = true; // Allow sort
         $this->_Permission->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->_Permission->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->_Permission->Param, "CustomMsg");
         $this->Fields['Permission'] = &$this->_Permission;
     }
 
@@ -268,18 +271,21 @@ class Permission2 extends DbTable
         $cnt = -1;
         $rs = null;
         if ($sql instanceof \Doctrine\DBAL\Query\QueryBuilder) { // Query builder
-            $sql = $sql->resetQueryPart("orderBy")->getSQL();
+            $sqlwrk = clone $sql;
+            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
+        } else {
+            $sqlwrk = $sql;
         }
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
             ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sql) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sql) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sql) && !preg_match('/\s+order\s+by\s+/i', $sql)
+            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sql);
+            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sql . ") COUNT_TABLE";
+            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
         $rs = $conn->executeQuery($sqlwrk);
@@ -536,18 +542,17 @@ class Permission2 extends DbTable
     // Return page URL
     public function getReturnUrl()
     {
+        $referUrl = ReferUrl();
+        $referPageName = ReferPageName();
         $name = PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL");
         // Get referer URL automatically
-        if (ReferUrl() != "" && ReferPageName() != CurrentPageName() && ReferPageName() != "login") { // Referer not same page or login page
-            $_SESSION[$name] = ReferUrl(); // Save to Session
+        if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
+            $_SESSION[$name] = $referUrl; // Save to Session
         }
-        if (@$_SESSION[$name] != "") {
-            return $_SESSION[$name];
-        } else {
-            return GetUrl("Permission2List");
-        }
+        return $_SESSION[$name] ?? GetUrl("Permission2List");
     }
 
+    // Set return page URL
     public function setReturnUrl($v)
     {
         $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL")] = $v;

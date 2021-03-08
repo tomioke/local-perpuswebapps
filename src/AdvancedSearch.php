@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Advanced Search class
@@ -79,11 +79,11 @@ class AdvancedSearch
     // Unset session
     public function unsetSession()
     {
-        unset($_SESSION[$this->getSessionName("x")]);
-        unset($_SESSION[$this->getSessionName("z")]);
-        unset($_SESSION[$this->getSessionName("v")]);
-        unset($_SESSION[$this->getSessionName("y")]);
-        unset($_SESSION[$this->getSessionName("w")]);
+        Session()->delete($this->getSessionName("x"))
+            ->delete($this->getSessionName("z"))
+            ->delete($this->getSessionName("v"))
+            ->delete($this->getSessionName("y"))
+            ->delete($this->getSessionName("w"));
     }
 
     // Isset session
@@ -196,19 +196,19 @@ class AdvancedSearch
         if (is_array($fldVal2)) {
             $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
         }
-        if (@$_SESSION[$this->getSessionName("x")] != $fldVal) {
+        if (Session($this->getSessionName("x")) != $fldVal) {
             $_SESSION[$this->getSessionName("x")] = $fldVal;
         }
-        if (@$_SESSION[$this->getSessionName("y")] != $fldVal2) {
+        if (Session($this->getSessionName("y")) != $fldVal2) {
             $_SESSION[$this->getSessionName("y")] = $fldVal2;
         }
-        if (@$_SESSION[$this->getSessionName("z")] != $this->SearchOperator) {
+        if (Session($this->getSessionName("z")) != $this->SearchOperator) {
             $_SESSION[$this->getSessionName("z")] = $this->SearchOperator;
         }
-        if (@$_SESSION[$this->getSessionName("v")] != $this->SearchCondition) {
+        if (Session($this->getSessionName("v")) != $this->SearchCondition) {
             $_SESSION[$this->getSessionName("v")] = $this->SearchCondition;
         }
-        if (@$_SESSION[$this->getSessionName("w")] != $this->SearchOperator2) {
+        if (Session($this->getSessionName("w")) != $this->SearchOperator2) {
             $_SESSION[$this->getSessionName("w")] = $this->SearchOperator2;
         }
     }
@@ -216,17 +216,17 @@ class AdvancedSearch
     // Load from session
     public function load()
     {
-        $this->SearchValue = @$_SESSION[$this->getSessionName("x")];
-        $this->SearchOperator = @$_SESSION[$this->getSessionName("z")];
-        $this->SearchCondition = @$_SESSION[$this->getSessionName("v")];
-        $this->SearchValue2 = @$_SESSION[$this->getSessionName("y")];
-        $this->SearchOperator2 = @$_SESSION[$this->getSessionName("w")];
+        $this->SearchValue = Session($this->getSessionName("x"));
+        $this->SearchOperator = Session($this->getSessionName("z"));
+        $this->SearchCondition = Session($this->getSessionName("v"));
+        $this->SearchValue2 = Session($this->getSessionName("y"));
+        $this->SearchOperator2 = Session($this->getSessionName("w"));
     }
 
     // Get value
     public function getValue($infix)
     {
-        return @$_SESSION[$this->getSessionName($infix)];
+        return Session($this->getSessionName($infix));
     }
 
     // Load default values
@@ -273,7 +273,7 @@ class AdvancedSearch
      * Check if search operator is valid
      *
      * @param string $opr Search operator, e.g. '<', '>'
-     * @return boolean
+     * @return bool
      */
     protected function isValidOperator($opr)
     {

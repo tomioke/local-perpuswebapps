@@ -73,12 +73,12 @@ private static $installed = array (
     ),
     'dflydev/dot-access-data' => 
     array (
-      'pretty_version' => 'v2.0.0',
-      'version' => '2.0.0.0',
+      'pretty_version' => 'v3.0.0',
+      'version' => '3.0.0.0',
       'aliases' => 
       array (
       ),
-      'reference' => '70a44e8a46c7943118cbbf741ef3411d84e38c81',
+      'reference' => 'e04ff030d24a33edc2421bef305e32919dd78fc3',
     ),
     'doctrine/cache' => 
     array (
@@ -127,12 +127,12 @@ private static $installed = array (
     ),
     'hkvstore/dompdf' => 
     array (
-      'pretty_version' => '0.8.502',
-      'version' => '0.8.502.0',
+      'pretty_version' => '1.0.200',
+      'version' => '1.0.200.0',
       'aliases' => 
       array (
       ),
-      'reference' => '627b5ffc61835872c167cf612518770e0eea0747',
+      'reference' => 'd77a64b3df0e5f5ca0d396ba89ad151817b8b7be',
     ),
     'hkvstore/phpmaker' => 
     array (
@@ -434,12 +434,12 @@ private static $installed = array (
     ),
     'selective/samesite-cookie' => 
     array (
-      'pretty_version' => '0.1.0',
-      'version' => '0.1.0.0',
+      'pretty_version' => '0.3.0',
+      'version' => '0.3.0.0',
       'aliases' => 
       array (
       ),
-      'reference' => '005c653c70b8b728750977266a89691e307f13ef',
+      'reference' => '805d82de34cb642189932feb17158da98078f9a6',
     ),
     'slim/csrf' => 
     array (

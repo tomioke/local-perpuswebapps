@@ -1,13 +1,12 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PeminjamanList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
-if (!ew.vars.tables.peminjaman) ew.vars.tables.peminjaman = <?= JsonEncode(GetClientVar("tables", "peminjaman")) ?>;
 var currentForm, currentPageID;
 var fpeminjamanlist;
 loadjs.ready("head", function () {
@@ -18,15 +17,18 @@ loadjs.ready("head", function () {
     fpeminjamanlist.formKeyCountName = '<?= $Page->FormKeyCountName ?>';
 
     // Add fields
-    var fields = ew.vars.tables.peminjaman.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "peminjaman")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.peminjaman)
+        ew.vars.tables.peminjaman = currentTable;
     fpeminjamanlist.addFields([
-        ["id_peminjaman", [fields.id_peminjaman.required ? ew.Validators.required(fields.id_peminjaman.caption) : null], fields.id_peminjaman.isInvalid],
-        ["berita_peminjaman", [fields.berita_peminjaman.required ? ew.Validators.required(fields.berita_peminjaman.caption) : null], fields.berita_peminjaman.isInvalid],
-        ["id_buku", [fields.id_buku.required ? ew.Validators.required(fields.id_buku.caption) : null], fields.id_buku.isInvalid],
-        ["id_anggota", [fields.id_anggota.required ? ew.Validators.required(fields.id_anggota.caption) : null], fields.id_anggota.isInvalid],
-        ["tgl_peminjaman", [fields.tgl_peminjaman.required ? ew.Validators.required(fields.tgl_peminjaman.caption) : null], fields.tgl_peminjaman.isInvalid],
-        ["rencana_tgl_kembali", [fields.rencana_tgl_kembali.required ? ew.Validators.required(fields.rencana_tgl_kembali.caption) : null, ew.Validators.datetime(0)], fields.rencana_tgl_kembali.isInvalid],
-        ["kondisi_buku_peminjaman", [fields.kondisi_buku_peminjaman.required ? ew.Validators.required(fields.kondisi_buku_peminjaman.caption) : null], fields.kondisi_buku_peminjaman.isInvalid]
+        ["id_peminjaman", [fields.id_peminjaman.visible && fields.id_peminjaman.required ? ew.Validators.required(fields.id_peminjaman.caption) : null], fields.id_peminjaman.isInvalid],
+        ["berita_peminjaman", [fields.berita_peminjaman.visible && fields.berita_peminjaman.required ? ew.Validators.required(fields.berita_peminjaman.caption) : null], fields.berita_peminjaman.isInvalid],
+        ["id_buku", [fields.id_buku.visible && fields.id_buku.required ? ew.Validators.required(fields.id_buku.caption) : null], fields.id_buku.isInvalid],
+        ["id_anggota", [fields.id_anggota.visible && fields.id_anggota.required ? ew.Validators.required(fields.id_anggota.caption) : null], fields.id_anggota.isInvalid],
+        ["tgl_peminjaman", [fields.tgl_peminjaman.visible && fields.tgl_peminjaman.required ? ew.Validators.required(fields.tgl_peminjaman.caption) : null], fields.tgl_peminjaman.isInvalid],
+        ["rencana_tgl_kembali", [fields.rencana_tgl_kembali.visible && fields.rencana_tgl_kembali.required ? ew.Validators.required(fields.rencana_tgl_kembali.caption) : null, ew.Validators.datetime(0)], fields.rencana_tgl_kembali.isInvalid],
+        ["kondisi_buku_peminjaman", [fields.kondisi_buku_peminjaman.visible && fields.kondisi_buku_peminjaman.required ? ew.Validators.required(fields.kondisi_buku_peminjaman.caption) : null], fields.kondisi_buku_peminjaman.isInvalid]
     ]);
 
     // Set invalid fields

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;

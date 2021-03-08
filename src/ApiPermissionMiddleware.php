@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Slim\Routing\RouteContext;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
@@ -17,9 +17,6 @@ class ApiPermissionMiddleware
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
         global $UserProfile, $Security, $Language, $ResponseFactory;
-
-        // API call
-        $GLOBALS["IsApi"] = true;
 
         // Create Response
         $response = $ResponseFactory->createResponse();
@@ -84,7 +81,10 @@ class ApiPermissionMiddleware
         if (
             in_array($action, $checkTokenActions) || // Token checked
             in_array($action, array_keys($GLOBALS["API_ACTIONS"])) || // Custom actions (deprecated)
-            in_array($action, [Config("API_UPLOAD_ACTION"), Config("API_PERMISSIONS_ACTION"), Config("API_REGISTER_ACTION")]) // Upload/Permissions/Register
+            $action == Config("API_REGISTER_ACTION") || // Register
+            $action == Config("API_PERMISSIONS_ACTION") && $request->getMethod() == "GET" || // Permissions (GET)
+            $action == Config("API_PERMISSIONS_ACTION") && $request->getMethod() == "POST" && $Security->isAdmin() || // Permissions (POST)
+            $action == Config("API_UPLOAD_ACTION") && $Security->isLoggedIn() // Upload
         ) {
             $authorised = true;
         } elseif (in_array($action, $apiTableActions) && $table != "") { // Table actions
@@ -97,10 +97,8 @@ class ApiPermissionMiddleware
                 $action == Config("API_FILE_ACTION") && ($Security->canList() || $Security->canView());
         } elseif ($action == Config("API_LOOKUP_ACTION")) { // Lookup
             $object = $request->getParam(Config("API_LOOKUP_PAGE")); // Get lookup page
-            $class = PROJECT_NAMESPACE . $object;
-            if (class_exists($class)) {
-                $page = new $class();
-                Container($object, $page);
+            $page = Container($object);
+            if ($page !== null) {
                 $fieldName = $request->getParam(Config("API_FIELD_NAME")); // Get field name
                 $lookupField = $page->Fields[$fieldName] ?? null;
                 if ($lookupField) {
@@ -108,7 +106,8 @@ class ApiPermissionMiddleware
                     if ($lookup) {
                         $tbl = $lookup->getTable();
                         if ($tbl) {
-                            $authorised = $Security->allowLookup(PROJECT_ID . $tbl->TableName);
+                            $Security->loadTablePermissions($tbl->TableVar);
+                            $authorised = $Security->canLookup();
                         }
                     }
                 }

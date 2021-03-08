@@ -1,4 +1,4 @@
-<?php namespace PHPMaker2021\perpus; ?>
+<?php namespace PHPMaker2021\perpusupdate; ?>
 <form id="ew-email-form" class="ew-horizontal ew-form ew-email-form" action="<?= CurrentPageUrl() ?>">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->

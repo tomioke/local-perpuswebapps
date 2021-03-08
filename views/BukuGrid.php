@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Set up and run Grid object
 $Grid = Container("BukuGrid");
@@ -8,7 +8,6 @@ $Grid->run();
 ?>
 <?php if (!$Grid->isExport()) { ?>
 <script>
-if (!ew.vars.tables.buku) ew.vars.tables.buku = <?= JsonEncode(GetClientVar("tables", "buku")) ?>;
 var currentForm, currentPageID;
 var fbukugrid;
 loadjs.ready("head", function () {
@@ -18,13 +17,16 @@ loadjs.ready("head", function () {
     fbukugrid.formKeyCountName = '<?= $Grid->FormKeyCountName ?>';
 
     // Add fields
-    var fields = ew.vars.tables.buku.fields;
+    var currentTable = <?= JsonEncode(GetClientVar("tables", "buku")) ?>,
+        fields = currentTable.fields;
+    if (!ew.vars.tables.buku)
+        ew.vars.tables.buku = currentTable;
     fbukugrid.addFields([
-        ["cover", [fields.cover.required ? ew.Validators.fileRequired(fields.cover.caption) : null], fields.cover.isInvalid],
-        ["nama_buku", [fields.nama_buku.required ? ew.Validators.required(fields.nama_buku.caption) : null], fields.nama_buku.isInvalid],
-        ["pengarang", [fields.pengarang.required ? ew.Validators.required(fields.pengarang.caption) : null], fields.pengarang.isInvalid],
-        ["penerbit", [fields.penerbit.required ? ew.Validators.required(fields.penerbit.caption) : null], fields.penerbit.isInvalid],
-        ["kode_isbn", [fields.kode_isbn.required ? ew.Validators.required(fields.kode_isbn.caption) : null], fields.kode_isbn.isInvalid]
+        ["cover", [fields.cover.visible && fields.cover.required ? ew.Validators.fileRequired(fields.cover.caption) : null], fields.cover.isInvalid],
+        ["nama_buku", [fields.nama_buku.visible && fields.nama_buku.required ? ew.Validators.required(fields.nama_buku.caption) : null], fields.nama_buku.isInvalid],
+        ["pengarang", [fields.pengarang.visible && fields.pengarang.required ? ew.Validators.required(fields.pengarang.caption) : null], fields.pengarang.isInvalid],
+        ["penerbit", [fields.penerbit.visible && fields.penerbit.required ? ew.Validators.required(fields.penerbit.caption) : null], fields.penerbit.isInvalid],
+        ["kode_isbn", [fields.kode_isbn.visible && fields.kode_isbn.required ? ew.Validators.required(fields.kode_isbn.caption) : null], fields.kode_isbn.isInvalid]
     ]);
 
     // Set invalid fields
@@ -309,13 +311,6 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 <?php } ?>
 </td>
     <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<input type="hidden" data-table="buku" data-field="x_id_buku" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id_buku" id="x<?= $Grid->RowIndex ?>_id_buku" value="<?= HtmlEncode($Grid->id_buku->CurrentValue) ?>">
-<input type="hidden" data-table="buku" data-field="x_id_buku" data-hidden="1" name="o<?= $Grid->RowIndex ?>_id_buku" id="o<?= $Grid->RowIndex ?>_id_buku" value="<?= HtmlEncode($Grid->id_buku->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT || $Grid->CurrentMode == "edit") { ?>
-<input type="hidden" data-table="buku" data-field="x_id_buku" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id_buku" id="x<?= $Grid->RowIndex ?>_id_buku" value="<?= HtmlEncode($Grid->id_buku->CurrentValue) ?>">
-<?php } ?>
     <?php if ($Grid->nama_buku->Visible) { // nama_buku ?>
         <td data-name="nama_buku" <?= $Grid->nama_buku->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 // Page object
 $PengembalianView = &$Page;
@@ -23,6 +23,9 @@ loadjs.ready("head", function () {
 });
 </script>
 <?php } ?>
+<script>
+if (!ew.vars.tables.pengembalian) ew.vars.tables.pengembalian = <?= JsonEncode(GetClientVar("tables", "pengembalian")) ?>;
+</script>
 <?php if (!$Page->isExport()) { ?>
 <div class="btn-toolbar ew-toolbar">
 <?php $Page->ExportOptions->render("body") ?>

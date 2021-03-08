@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -79,6 +79,7 @@ class Anggota extends DbTable
         $this->id_anggota->IsPrimaryKey = true; // Primary key field
         $this->id_anggota->Sortable = true; // Allow sort
         $this->id_anggota->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_anggota->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_anggota->Param, "CustomMsg");
         $this->Fields['id_anggota'] = &$this->id_anggota;
 
         // nama_anggota
@@ -86,6 +87,7 @@ class Anggota extends DbTable
         $this->nama_anggota->Nullable = false; // NOT NULL field
         $this->nama_anggota->Required = true; // Required field
         $this->nama_anggota->Sortable = true; // Allow sort
+        $this->nama_anggota->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->nama_anggota->Param, "CustomMsg");
         $this->Fields['nama_anggota'] = &$this->nama_anggota;
 
         // alamat
@@ -93,6 +95,7 @@ class Anggota extends DbTable
         $this->alamat->Nullable = false; // NOT NULL field
         $this->alamat->Required = true; // Required field
         $this->alamat->Sortable = true; // Allow sort
+        $this->alamat->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->alamat->Param, "CustomMsg");
         $this->Fields['alamat'] = &$this->alamat;
 
         // tgl_lahir
@@ -101,6 +104,7 @@ class Anggota extends DbTable
         $this->tgl_lahir->Required = true; // Required field
         $this->tgl_lahir->Sortable = true; // Allow sort
         $this->tgl_lahir->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->tgl_lahir->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->tgl_lahir->Param, "CustomMsg");
         $this->Fields['tgl_lahir'] = &$this->tgl_lahir;
 
         // tmp_lahir
@@ -108,6 +112,7 @@ class Anggota extends DbTable
         $this->tmp_lahir->Nullable = false; // NOT NULL field
         $this->tmp_lahir->Required = true; // Required field
         $this->tmp_lahir->Sortable = true; // Allow sort
+        $this->tmp_lahir->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->tmp_lahir->Param, "CustomMsg");
         $this->Fields['tmp_lahir'] = &$this->tmp_lahir;
 
         // username
@@ -115,6 +120,7 @@ class Anggota extends DbTable
         $this->_username->Nullable = false; // NOT NULL field
         $this->_username->Required = true; // Required field
         $this->_username->Sortable = true; // Allow sort
+        $this->_username->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->_username->Param, "CustomMsg");
         $this->Fields['username'] = &$this->_username;
 
         // password
@@ -125,6 +131,7 @@ class Anggota extends DbTable
         $this->_password->Nullable = false; // NOT NULL field
         $this->_password->Required = true; // Required field
         $this->_password->Sortable = true; // Allow sort
+        $this->_password->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->_password->Param, "CustomMsg");
         $this->Fields['password'] = &$this->_password;
 
         // id_level
@@ -136,6 +143,7 @@ class Anggota extends DbTable
         $this->id_level->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->id_level->Lookup = new Lookup('id_level', 'level', false, 'ID_Level', ["Level_Name","","",""], [], [], [], [], [], [], '', '');
         $this->id_level->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_level->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_level->Param, "CustomMsg");
         $this->Fields['id_level'] = &$this->id_level;
 
         // no_handphone
@@ -143,6 +151,7 @@ class Anggota extends DbTable
         $this->no_handphone->Nullable = false; // NOT NULL field
         $this->no_handphone->Required = true; // Required field
         $this->no_handphone->Sortable = true; // Allow sort
+        $this->no_handphone->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->no_handphone->Param, "CustomMsg");
         $this->Fields['no_handphone'] = &$this->no_handphone;
 
         // email
@@ -151,6 +160,7 @@ class Anggota extends DbTable
         $this->_email->Required = true; // Required field
         $this->_email->Sortable = true; // Allow sort
         $this->_email->DefaultErrorMessage = $Language->phrase("IncorrectEmail");
+        $this->_email->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->_email->Param, "CustomMsg");
         $this->Fields['email'] = &$this->_email;
     }
 
@@ -359,18 +369,21 @@ class Anggota extends DbTable
         $cnt = -1;
         $rs = null;
         if ($sql instanceof \Doctrine\DBAL\Query\QueryBuilder) { // Query builder
-            $sql = $sql->resetQueryPart("orderBy")->getSQL();
+            $sqlwrk = clone $sql;
+            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
+        } else {
+            $sqlwrk = $sql;
         }
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
             ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sql) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sql) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sql) && !preg_match('/\s+order\s+by\s+/i', $sql)
+            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sql);
+            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sql . ") COUNT_TABLE";
+            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
         $rs = $conn->executeQuery($sqlwrk);
@@ -673,18 +686,17 @@ class Anggota extends DbTable
     // Return page URL
     public function getReturnUrl()
     {
+        $referUrl = ReferUrl();
+        $referPageName = ReferPageName();
         $name = PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL");
         // Get referer URL automatically
-        if (ReferUrl() != "" && ReferPageName() != CurrentPageName() && ReferPageName() != "login") { // Referer not same page or login page
-            $_SESSION[$name] = ReferUrl(); // Save to Session
+        if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
+            $_SESSION[$name] = $referUrl; // Save to Session
         }
-        if (@$_SESSION[$name] != "") {
-            return $_SESSION[$name];
-        } else {
-            return GetUrl("AnggotaList");
-        }
+        return $_SESSION[$name] ?? GetUrl("AnggotaList");
     }
 
+    // Set return page URL
     public function setReturnUrl($v)
     {
         $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL")] = $v;
@@ -1316,7 +1328,7 @@ SORTHTML;
         }
 
         // Call User ID Filtering event
-        $this->userIDFiltering($filterWrk);
+        $this->userIdFiltering($filterWrk);
         AddFilter($filter, $filterWrk);
         return $filter;
     }

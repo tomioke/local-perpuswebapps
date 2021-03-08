@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Doctrine\DBAL\ParameterType;
 
@@ -74,6 +74,7 @@ class Penerbit extends DbTable
         $this->id_penerbit->IsForeignKey = true; // Foreign key field
         $this->id_penerbit->Sortable = true; // Allow sort
         $this->id_penerbit->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id_penerbit->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->id_penerbit->Param, "CustomMsg");
         $this->Fields['id_penerbit'] = &$this->id_penerbit;
 
         // nama_penerbit
@@ -81,11 +82,13 @@ class Penerbit extends DbTable
         $this->nama_penerbit->Nullable = false; // NOT NULL field
         $this->nama_penerbit->Required = true; // Required field
         $this->nama_penerbit->Sortable = true; // Allow sort
+        $this->nama_penerbit->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->nama_penerbit->Param, "CustomMsg");
         $this->Fields['nama_penerbit'] = &$this->nama_penerbit;
 
         // alamat_penerbit
         $this->alamat_penerbit = new DbField('penerbit', 'penerbit', 'x_alamat_penerbit', 'alamat_penerbit', '`alamat_penerbit`', '`alamat_penerbit`', 200, 200, -1, false, '`alamat_penerbit`', false, false, false, 'FORMATTED TEXT', 'TEXT');
         $this->alamat_penerbit->Sortable = true; // Allow sort
+        $this->alamat_penerbit->CustomMsg = $Language->FieldPhrase($this->TableVar, $this->alamat_penerbit->Param, "CustomMsg");
         $this->Fields['alamat_penerbit'] = &$this->alamat_penerbit;
     }
 
@@ -152,7 +155,7 @@ class Penerbit extends DbTable
     // Current detail table name
     public function getCurrentDetailTable()
     {
-        return @$_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE")];
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE"));
     }
 
     public function setCurrentDetailTable($v)
@@ -315,18 +318,21 @@ class Penerbit extends DbTable
         $cnt = -1;
         $rs = null;
         if ($sql instanceof \Doctrine\DBAL\Query\QueryBuilder) { // Query builder
-            $sql = $sql->resetQueryPart("orderBy")->getSQL();
+            $sqlwrk = clone $sql;
+            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
+        } else {
+            $sqlwrk = $sql;
         }
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
             ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sql) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sql) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sql) && !preg_match('/\s+order\s+by\s+/i', $sql)
+            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sql);
+            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sql . ") COUNT_TABLE";
+            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
         $rs = $conn->executeQuery($sqlwrk);
@@ -664,18 +670,17 @@ class Penerbit extends DbTable
     // Return page URL
     public function getReturnUrl()
     {
+        $referUrl = ReferUrl();
+        $referPageName = ReferPageName();
         $name = PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL");
         // Get referer URL automatically
-        if (ReferUrl() != "" && ReferPageName() != CurrentPageName() && ReferPageName() != "login") { // Referer not same page or login page
-            $_SESSION[$name] = ReferUrl(); // Save to Session
+        if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
+            $_SESSION[$name] = $referUrl; // Save to Session
         }
-        if (@$_SESSION[$name] != "") {
-            return $_SESSION[$name];
-        } else {
-            return GetUrl("PenerbitList");
-        }
+        return $_SESSION[$name] ?? GetUrl("PenerbitList");
     }
 
+    // Set return page URL
     public function setReturnUrl($v)
     {
         $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RETURN_URL")] = $v;

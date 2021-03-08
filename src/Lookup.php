@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Lookup class
@@ -98,11 +98,14 @@ class Lookup
      * @param bool $skipFilterFields
      * @return QueryBuilder
      */
-    public function getSql($useParentFilter = true, $currentFilter = "", $lookupFilter = "", $page = null, $skipFilterFields = false)
+    public function getSql($useParentFilter = true, $currentFilter = "", $lookupFilter = "", $page = null, $skipFilterFields = false, $clearUserFilter = false)
     {
         $this->UseParentFilter = $useParentFilter; // Save last call
         $this->CurrentFilter = $currentFilter;
         $this->LookupFilter = $lookupFilter; // Save last call
+        if ($clearUserFilter) {
+            $this->UserFilter = "";
+        }
         if ($page !== null) {
             $filter = $this->getUserFilter($useParentFilter);
             $newFilter = $filter;
@@ -126,7 +129,7 @@ class Lookup
      * @param array $options Input options with formats:
      *  1. Manual input data, e.g.: [ ["lv1", "dv", "dv2", "dv3", "dv4"], ["lv2", "dv", "dv2", "dv3", "dv4"], etc...]
      *  2. Data from $rs->getRows(), e.g.: [ [0 => "lv1", "Field1" => "lv1", 1 => "dv", "Field2" => "dv2", ...], [0 => "lv2", "Field1" => "lv2", 1 => "dv", "Field2" => "dv2", ...], etc...]
-     * @return boolean Output array ["lv1" => [0 => "lv1", "lf" => "lv1", 1 => "dv", "df" => "dv", etc...], etc...]
+     * @return bool Output array ["lv1" => [0 => "lv1", "lf" => "lv1", 1 => "dv", "df" => "dv", etc...], etc...]
      */
     public function setOptions($options)
     {
@@ -192,10 +195,10 @@ class Lookup
             "field" => $this->Name,
             "linkField" => $this->LinkField,
             "displayFields" => $this->DisplayFields,
-            "parentFields" => $this->ParentFields,
+            "parentFields" => $currentPage->PageID != "grid" && $this->hasParentTable() ? [] : $this->ParentFields,
             "childFields" => $this->ChildFields,
-            "filterFields" => array_keys($this->FilterFields),
-            "filterFieldVars" => $this->FilterFieldVars,
+            "filterFields" => $currentPage->PageID != "grid" && $this->hasParentTable() ? [] : array_keys($this->FilterFields),
+            "filterFieldVars" => $currentPage->PageID != "grid" && $this->hasParentTable() ? [] : $this->FilterFieldVars,
             "ajax" => $this->LinkTable != "",
             "autoFillTargetFields" => $this->AutoFillTargetFields,
             "template" => $this->Template
@@ -205,7 +208,7 @@ class Lookup
     /**
      * Execute SQL and write JSON response
      *
-     * @return boolean
+     * @return bool
      */
     public function toJson($page = null)
     {
@@ -236,7 +239,9 @@ class Lookup
                 }
             }
         }
-        $sql = $this->getSql(true, "", "", $page);
+        $filterValues = count($this->FilterValues) > 0 ? array_slice($this->FilterValues, 1) : [];
+        $useParentFilter = count($filterValues) == count(array_filter($filterValues)) || !$this->hasParentTable();
+        $sql = $this->getSql($useParentFilter, "", "", $page, !$useParentFilter);
         $orderBy = $this->UserOrderBy;
         $pageSize = $this->PageSize;
         $offset = $this->Offset;
@@ -386,11 +391,23 @@ class Lookup
         return $this->Table;
     }
 
+    public function hasParentTable()
+    {
+        if (is_array($this->ParentFields)) {
+            foreach ($this->ParentFields as $parentField) {
+                if (strval($parentField) != "" && ContainsText($parentField, " ")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Check if filter operator is valid
      *
      * @param string $opr Operator, e.g. '<', '>'
-     * @return boolean
+     * @return bool
      */
     protected function isValidOperator($opr)
     {
@@ -586,13 +603,16 @@ class Lookup
             if ($select != "") {
                 $sql = $select;
                 $dbType = GetConnectionType($tbl->Dbid);
-                if ($where != "")
+                if ($where != "") {
                     $sql .= " WHERE " . $where;
-                if ($orderBy != "")
-                    if ($dbType == "MSSQL")
+                }
+                if ($orderBy != "") {
+                    if ($dbType == "MSSQL") {
                         $sql .= " /*BeginOrderBy*/ORDER BY " . $orderBy . "/*EndOrderBy*/";
-                    else
+                    } else {
                         $sql .= " ORDER BY " . $orderBy;
+                    }
+                }
                 return $sql;
             } else {
                 if ($where != "") {
@@ -679,8 +699,8 @@ class Lookup
      *
      * @param string|QueryBuilder $sql SQL or QueryBuilder of the SQL to be executed
      * @param string $orderBy ORDER BY clause
-     * @param integer $pageSize
-     * @param integer $offset
+     * @param int $pageSize
+     * @param int $offset
      * @return ResultStatement
      */
     protected function executeQuery($sql, $orderBy, $pageSize, $offset)
@@ -696,10 +716,8 @@ class Lookup
             if ($pageSize > 0) {
                 $sql->setMaxResults($pageSize);
             }
-            Log($sql);
             return $sql->execute();
         } else {
-            Log($sql);
             $conn = $tbl->getConnection();
             return $conn->executeQuery($sql);
         }

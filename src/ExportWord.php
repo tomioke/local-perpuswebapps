@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 /**
  * Export to Word
@@ -14,8 +14,8 @@ class ExportWord extends ExportBase
         if (!Config("DEBUG") && ob_get_length()) {
             ob_end_clean();
         }
-        header('Content-Type: application/msword' . ((Config("PROJECT_CHARSET") != '') ? '; charset=' . Config("PROJECT_CHARSET") : ''));
-        header('Content-Disposition: attachment; filename=' . $ExportFileName . '.doc');
+        AddHeader('Content-Type', 'application/msword' . ((Config("PROJECT_CHARSET") != '') ? '; charset=' . Config("PROJECT_CHARSET") : ''));
+        AddHeader('Content-Disposition', 'attachment; filename=' . $ExportFileName . '.doc');
         if (SameText(Config("PROJECT_CHARSET"), "utf-8")) {
             Write("\xEF\xBB\xBF");
         }

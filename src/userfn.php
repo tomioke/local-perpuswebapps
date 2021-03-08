@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2021\perpus;
+namespace PHPMaker2021\perpusupdate;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -26,17 +26,16 @@ function GetStartsWithAFilter($FldExpression, $dbid = 0)
 }
 
 // Global user functions
-
 // Database Connecting event
-function Database_Connecting(&$info)
-{
-    // Example:
+function Database_Connecting(&$info) {
     //var_dump($info);
-    //if ($info["id"] == "DB" && IsLocal()) { // Testing on local PC
-    //    $info["host"] = "locahost";
-    //    $info["user"] = "root";
-    //    $info["pass"] = "";
-    //}
+    // Assume the scripts are generated with connection info for local database
+    if (!IsLocal()) { // Not local (Production)
+        $info["host"] = "localhost";
+        $info["user"] = "perpusto_root";
+        $info["password"] = "Tiosableng123";
+        $info["db"] = "perpusto_db_perpustakaan";
+    }
 }
 
 // Database Connected event

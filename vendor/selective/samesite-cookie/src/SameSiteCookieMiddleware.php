@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use RuntimeException;
 
 /**
  * SameSite Cookie Middleware.
@@ -13,30 +14,27 @@ use Psr\Http\Server\RequestHandlerInterface;
 final class SameSiteCookieMiddleware implements MiddlewareInterface
 {
     /**
-     * @var string
+     * @var SameSiteCookieConfiguration
      */
-    private $sameSite;
+    private $configuration;
 
     /**
-     * @var bool
+     * @var SessionHandlerInterface
      */
-    private $httpOnly;
-
-    /**
-     * @var bool
-     */
-    private $secure;
+    private $sessionHandler;
 
     /**
      * The constructor.
      *
-     * @param SameSiteCookieConfiguration $configuration The configuration
+     * @param SameSiteCookieConfiguration|null $configuration The configuration
+     * @param SessionHandlerInterface|null $sessionHandler The session handler
      */
-    public function __construct(SameSiteCookieConfiguration $configuration)
-    {
-        $this->sameSite = $configuration->sameSite;
-        $this->httpOnly = $configuration->httpOnly;
-        $this->secure = $configuration->secure;
+    public function __construct(
+        SameSiteCookieConfiguration $configuration = null,
+        SessionHandlerInterface $sessionHandler = null
+    ) {
+        $this->configuration = $configuration ?: new SameSiteCookieConfiguration();
+        $this->sessionHandler = $sessionHandler ?: new PhpSessionHandler();
     }
 
     /**
@@ -45,35 +43,39 @@ final class SameSiteCookieMiddleware implements MiddlewareInterface
      * @param ServerRequestInterface $request The request
      * @param RequestHandlerInterface $handler The handler
      *
+     * @throws RuntimeException
+     *
      * @return ResponseInterface The response
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);
 
-        $sessionId = $request->getAttribute('session_id');
-        $sessionName = $request->getAttribute('session_name');
-        $params = $request->getAttribute('session_cookie_params');
+        $sessionId = $this->sessionHandler->getId();
+        $sessionName = $this->sessionHandler->getName();
+        $params = $this->sessionHandler->getCookieParams();
+
+        if (!$sessionId || !$sessionName || !$params) {
+            throw new RuntimeException('The session must be started before samesite cookie can be generated.');
+        }
 
         $cookieValues = [
             sprintf('%s=%s;', $sessionName, $sessionId),
             sprintf('path=%s;', $params['path']),
         ];
 
-        if ($this->secure) {
+        if ($this->configuration->secure) {
             $cookieValues[] = 'Secure;';
         }
 
-        if ($this->httpOnly) {
+        if ($this->configuration->httpOnly) {
             $cookieValues[] = 'HttpOnly;';
         }
 
-        if ($this->sameSite) {
-            $cookieValues[] = sprintf('SameSite=%s;', $this->sameSite);
+        if ($this->configuration->sameSite) {
+            $cookieValues[] = sprintf('SameSite=%s;', $this->configuration->sameSite);
         }
 
-        $response = $response->withHeader('Set-Cookie', implode(' ', $cookieValues));
-
-        return $response;
+        return $response->withHeader('Set-Cookie', implode(' ', $cookieValues));
     }
 }
